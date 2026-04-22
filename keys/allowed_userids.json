@@ -1,13 +1,6 @@
 {
-  "allowed_userids": [
-    "pdek1991",
-    "admin",
-    "pavan.hanje",
-    "prakash.dash",
-    "sangram",
-    "shankar",
-    "abhijeet",
-    "jerry",
-    "avanish"
-  ]
+  "encrypted": true,
+  "algorithm": "AES-GCM",
+  "iv": "fd046J5V_945zC8H",
+  "ciphertext": "GDf8rTpIc_e0icj1FfwnxWizYGySQaqg1MhJ7r2woAGVmKl-_4s56NWCQkPexeZTX2uk8kVhJRujlqW7gX3j5FfpuXK0n92Il6SI8rSawhqcZ5d2rCGX9sVjVhk4upuy-OW4I30_S5UKqVyYlgLUWyzFJGI2uVpviTiSxsEEA5nIX6yHvjrV_YG374YsU9_BUW-vZflxp4QOpUcMxJhfLYroAnTKcnZE9Xz_QlB98C0bRnGFh-p8PFlmDQ"
 }

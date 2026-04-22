@@ -1,8 +1,6 @@
 {
-  "free": "https://ott.prashantkadam.in/free/manifest.mpd",
-  "asiacup": "https://ott.prashantkadam.in/asiacup/manifest.mpd",
-  "output_02_04": "https://ott.prashantkadam.in/output_02_04/manifest.mpd",
-  "output_2min": "https://ott.prashantkadam.in/output_2min/manifest.mpd",
-  "tmkoc": "https://ott.prashantkadam.in/tmkoc/manifest.mpd",
-  "withlogo": "https://ott.prashantkadam.in/withlogo/manifest.mpd"
+  "encrypted": true,
+  "algorithm": "AES-GCM",
+  "iv": "HlHmicJuvPFSeIaX",
+  "ciphertext": "3K5LFA7pTuO45k5QzCdp-EapzOP1GaJGkN7hFa4W8oFdSeZJ7GXV61bT5htTi8Z3FoaAjGBYzygMwM64tvKpFtMAbDREMaQixBp-dm9xYAzpd9SLjyfxXbErZjBbec-oPaVywdEem_x-kJPSfvG5aHS7MkiKkH0S_5rLXZosQtK5zJJxU8dVXEvscGvDnKxaRhkk99zBjoCWx8bSB79FE7YkRYSBZfnr0_EH74pjz6Qn6oc-YK1KSFxbt4HNgswjZZV5yRIqwoKcSrh52HFxtCDdvc1z6Dq0Ugf3TVOE8-rNi7DikdXH5bneKZSzn_ANR6KLDRSZWu1041YF8C6nMD6LU_1f6idloXQVAR3JaRQx0swaCb78AP8O29ZdtGb0ngwc0Xn4JmAHbJu5XcfDV9ehTIjsAD4cSBQ7kGaRgDO_i-ewQzLpK3hhIZkcDwOKCCIFdHAkl4frMY1LhAD16SjdJ6UF742P3R_hBW7lWI3QEyMhjhU5kiy3PL5F_r9x_mopKQRKmxSvHro5ctxfJ3vNe60uJXXsqxDWupH8SdQ7ii91pORm35M"
 }

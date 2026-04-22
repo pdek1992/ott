@@ -707,12 +707,11 @@
     }
 
     const raw = await fetchFirstJson([config.keysUrl, config.localKeysUrl]);
-    const decrypted = await maybeDecryptKeyStore(raw);
-    state.keyStore = normalizeKeyStore(decrypted);
+    state.keyStore = normalizeKeyStore(raw);
     return state.keyStore;
   }
 
-  async function maybeDecryptKeyStore(raw) {
+  async function maybeDecryptJson(raw) {
     if (!raw || !raw.encrypted) {
       return raw;
     }
@@ -1219,7 +1218,7 @@
     if (!response.ok) {
       throw new Error(`Fetch failed: ${response.status} ${url}`);
     }
-    return response.json();
+    return maybeDecryptJson(await response.json());
   }
 
   async function fetchFirstJson(urls) {

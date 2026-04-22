@@ -1,6 +1,6 @@
 {
-  "allowed_emails": [
-    "pdek1991@gmail.com",
-    "pdek1992@gmail.com"
-  ]
+  "encrypted": true,
+  "algorithm": "AES-GCM",
+  "iv": "50iIU1fY3pU1puQb",
+  "ciphertext": "plvNFk3FkX5ldTkKzQGVSgfGUq2djANaLCKTwko4-WAZzTsGbIykL7ixOg200Ng9UGcoH5tEwgJdGrU-x_rdlq_QSCA0laSKygGc0YoC2hmfrCWkzc3NvTya3HAtBo8q"
 }
