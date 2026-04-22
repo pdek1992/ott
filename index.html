@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#05070b" />
-    <meta name="description" content="GitHub Pages OTT demo with DASH, ClearKey, GitHub auth, and glass UI." />
+    <meta name="description" content="A cinematic streaming app experience." />
     <title>OTT Glass</title>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./assets/logo.png" />
@@ -23,16 +23,16 @@
     <main id="authScreen" class="auth-screen">
       <section class="login-panel glass-panel" aria-labelledby="loginTitle">
         <img class="login-logo" src="./assets/logo.png" alt="OTT logo" />
-        <p class="eyebrow">Cloudflare R2 + GitHub Raw</p>
+        <p class="eyebrow">Premium Streaming</p>
         <h1 id="loginTitle">OTT Glass</h1>
         <form id="loginForm" class="login-form">
           <label>
             <span>Email</span>
-            <input id="emailInput" name="email" type="email" autocomplete="email" placeholder="pdek1991@gmail.com" />
+            <input id="emailInput" name="email" type="email" autocomplete="email" />
           </label>
           <label>
             <span>User ID</span>
-            <input id="userIdInput" name="userId" type="text" autocomplete="username" placeholder="admin" />
+            <input id="userIdInput" name="userId" type="text" autocomplete="username" />
           </label>
           <button id="loginButton" class="primary-btn" type="submit">
             <i data-lucide="log-in" aria-hidden="true"></i>
@@ -84,7 +84,7 @@
         <div class="hero-content">
           <p id="heroCategory" class="eyebrow">Featured</p>
           <h2 id="heroTitle">Ready to stream</h2>
-          <p id="heroDescription">DASH playback loads from your CDN or R2 folder and keys load from GitHub Raw.</p>
+          <p id="heroDescription">Stream your favorite titles in a sleek cinematic experience.</p>
           <div class="hero-meta" id="heroMeta"></div>
           <div class="hero-actions">
             <button id="heroPlayButton" class="primary-btn" type="button">
@@ -112,7 +112,7 @@
           <i data-lucide="refresh-cw" aria-hidden="true"></i>
           Refresh
         </button>
-        <span id="deviceStatus" class="device-status">Checking playback device</span>
+        <span id="deviceStatus" class="device-status">Ready</span>
       </section>
 
       <section id="rails" class="rails" aria-label="Video rails"></section>
@@ -148,31 +148,20 @@
           </div>
           <div id="playerError" class="player-error" role="alert" hidden>
             <i data-lucide="triangle-alert" aria-hidden="true"></i>
-            <span>Video file or segment is not available.</span>
+            <span>This title is unavailable right now.</span>
           </div>
         </div>
         <aside class="watch-panel glass-panel">
           <p class="eyebrow">Now Playing</p>
           <h3 id="watchTitle">Title</h3>
           <p id="watchDescription"></p>
-          <dl class="watch-stats">
-            <div>
-              <dt>License</dt>
-              <dd id="licenseStatus">GitHub Raw</dd>
-            </div>
-            <div>
-              <dt>DRM</dt>
-              <dd id="drmStatus">ClearKey</dd>
-            </div>
-            <div>
-              <dt>Ads</dt>
-              <dd id="adStatus">Waiting</dd>
-            </div>
-          </dl>
         </aside>
       </div>
     </section>
 
+    <span id="playbackState" hidden></span>
+    <span id="protectionState" hidden></span>
+    <span id="adStatus" hidden></span>
     <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
   </body>
 </html>

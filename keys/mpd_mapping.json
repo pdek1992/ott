@@ -1,5 +1,6 @@
 {
   "free": "https://ott.prashantkadam.in/free/manifest.mpd",
+  "asiacup": "https://ott.prashantkadam.in/asiacup/manifest.mpd",
   "output_02_04": "https://ott.prashantkadam.in/output_02_04/manifest.mpd",
   "output_2min": "https://ott.prashantkadam.in/output_2min/manifest.mpd",
   "tmkoc": "https://ott.prashantkadam.in/tmkoc/manifest.mpd",
