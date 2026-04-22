@@ -1,167 +1,172 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#05070b" />
-    <meta name="description" content="A cinematic streaming app experience." />
-    <title>OTT Glass</title>
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" href="./assets/logo.png" />
-    <link rel="apple-touch-icon" href="./assets/logo.png" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css" />
-    <link rel="stylesheet" href="./styles.css" />
-    <script defer src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.min.js"></script>
-    <script defer src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
-    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <script defer src="./config.js"></script>
-    <script defer src="./app.js"></script>
-  </head>
-  <body>
-    <div class="cinema-backdrop" aria-hidden="true"></div>
 
-    <main id="authScreen" class="auth-screen">
-      <section class="login-panel glass-panel" aria-labelledby="loginTitle">
-        <img class="login-logo" src="./assets/logo.png" alt="OTT logo" />
-        <p class="eyebrow">Premium Streaming</p>
-        <h1 id="loginTitle">OTT Glass</h1>
-        <form id="loginForm" class="login-form">
-          <label>
-            <span>Email</span>
-            <input id="emailInput" name="email" type="email" autocomplete="email" />
-          </label>
-          <label>
-            <span>User ID</span>
-            <input id="userIdInput" name="userId" type="text" autocomplete="username" />
-          </label>
-          <button id="loginButton" class="primary-btn" type="submit">
-            <i data-lucide="log-in" aria-hidden="true"></i>
-            Sign in
-          </button>
-        </form>
-        <div class="auth-actions">
-          <button id="deviceUnlockButton" class="ghost-btn" type="button">
-            <i data-lucide="fingerprint" aria-hidden="true"></i>
-            Device unlock
-          </button>
-          <button id="installButton" class="ghost-btn" type="button" hidden>
-            <i data-lucide="download" aria-hidden="true"></i>
-            Install
-          </button>
-        </div>
-        <p id="authMessage" class="status-text" role="status"></p>
-      </section>
-    </main>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#05070b" />
+  <meta name="description" content="A cinematic streaming app experience." />
+  <title>VigilSiddhi OTT</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/logo.png" />
+  <link rel="apple-touch-icon" href="./assets/logo.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.min.js"></script>
+  <script defer src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script defer src="./config.js"></script>
+  <script defer src="./app.js"></script>
+</head>
 
-    <div id="appShell" class="app-shell" hidden>
-      <header class="topbar glass-strip">
-        <a class="brand" href="#home" aria-label="OTT Glass home">
-          <img src="./assets/logo.png" alt="" />
-          <span>OTT Glass</span>
-        </a>
-        <nav class="nav-links" aria-label="Primary">
-          <a href="#home">Home</a>
-          <a href="#rails">Browse</a>
-          <a href="#my-list">My List</a>
-        </nav>
-        <label class="search-box" aria-label="Search titles">
-          <i data-lucide="search" aria-hidden="true"></i>
-          <input id="searchInput" type="search" placeholder="Search" />
+<body>
+  <div class="cinema-backdrop" aria-hidden="true"></div>
+
+  <main id="authScreen" class="auth-screen">
+    <section class="login-panel glass-panel" aria-labelledby="loginTitle">
+      <img class="login-logo" src="./assets/logo.png" alt="OTT logo" />
+      <p class="eyebrow">Premium Streaming</p>
+      <h1 id="loginTitle">VigilSiddhi OTT</h1>
+      <form id="loginForm" class="login-form">
+        <label>
+          <span>Email</span>
+          <input id="emailInput" name="email" type="email" autocomplete="email" />
         </label>
-        <div class="profile-chip">
-          <i data-lucide="user-check" aria-hidden="true"></i>
-          <span id="profileName">Guest</span>
-        </div>
-        <button id="logoutButton" class="icon-btn" type="button" aria-label="Log out" title="Log out">
-          <i data-lucide="log-out" aria-hidden="true"></i>
+        <label>
+          <span>User ID</span>
+          <input id="userIdInput" name="userId" type="text" autocomplete="username" />
+        </label>
+        <button id="loginButton" class="primary-btn" type="submit">
+          <i data-lucide="log-in" aria-hidden="true"></i>
+          Sign in
         </button>
-      </header>
-
-      <section id="home" class="hero">
-        <div class="hero-media">
-          <img id="heroImage" src="./assets/logo.png" alt="" />
-        </div>
-        <div class="hero-content">
-          <p id="heroCategory" class="eyebrow">Featured</p>
-          <h2 id="heroTitle">Ready to stream</h2>
-          <p id="heroDescription">Stream your favorite titles in a sleek cinematic experience.</p>
-          <div class="hero-meta" id="heroMeta"></div>
-          <div class="hero-actions">
-            <button id="heroPlayButton" class="primary-btn" type="button">
-              <i data-lucide="play" aria-hidden="true"></i>
-              Play
-            </button>
-            <button id="heroListButton" class="secondary-btn" type="button">
-              <i data-lucide="plus" aria-hidden="true"></i>
-              My List
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="quick-actions glass-strip" aria-label="Device actions">
-        <button id="notificationButton" class="ghost-btn" type="button">
-          <i data-lucide="bell" aria-hidden="true"></i>
-          Notifications
-        </button>
-        <button id="registerDeviceButton" class="ghost-btn" type="button">
+      </form>
+      <div class="auth-actions">
+        <button id="deviceUnlockButton" class="ghost-btn" type="button">
           <i data-lucide="fingerprint" aria-hidden="true"></i>
-          Fingerprint
+          Device unlock
         </button>
-        <button id="refreshDataButton" class="ghost-btn" type="button">
-          <i data-lucide="refresh-cw" aria-hidden="true"></i>
-          Refresh
+        <button id="installButton" class="ghost-btn" type="button" hidden>
+          <i data-lucide="download" aria-hidden="true"></i>
+          Install
         </button>
-        <span id="deviceStatus" class="device-status">Ready</span>
-      </section>
-
-      <section id="rails" class="rails" aria-label="Video rails"></section>
-      <section id="my-list" class="rails" aria-label="My list"></section>
-    </div>
-
-    <section id="playerOverlay" class="player-overlay" role="dialog" aria-modal="true" aria-label="Video player" hidden>
-      <div class="player-topbar">
-        <button id="closePlayerButton" class="icon-btn" type="button" aria-label="Close player" title="Close player">
-          <i data-lucide="x" aria-hidden="true"></i>
-        </button>
-        <div>
-          <h2 id="playerTitle">Player</h2>
-          <p id="playerMeta"></p>
-        </div>
-        <div class="player-actions">
-          <button id="pipButton" class="icon-btn" type="button" aria-label="Picture in picture" title="Picture in picture">
-            <i data-lucide="picture-in-picture" aria-hidden="true"></i>
-          </button>
-          <button id="fullscreenButton" class="icon-btn" type="button" aria-label="Fullscreen" title="Fullscreen">
-            <i data-lucide="maximize" aria-hidden="true"></i>
-          </button>
-        </div>
       </div>
+      <p id="authMessage" class="status-text" role="status"></p>
+    </section>
+  </main>
 
-      <div class="player-grid">
-        <div id="videoContainer" class="video-container" data-shaka-player-container>
-          <video id="videoElement" data-shaka-player playsinline crossorigin="anonymous" poster="./assets/logo.png"></video>
-          <div id="adContainer" class="ad-container"></div>
-          <div id="adOverlay" class="ad-overlay" hidden>
-            <span>Ad break</span>
-            <strong id="adCountdown">5</strong>
-          </div>
-          <div id="playerError" class="player-error" role="alert" hidden>
-            <i data-lucide="triangle-alert" aria-hidden="true"></i>
-            <span>This title is unavailable right now.</span>
-          </div>
+  <div id="appShell" class="app-shell" hidden>
+    <header class="topbar glass-strip">
+      <a class="brand" href="#home" aria-label="VigilSiddhi OTT home">
+        <img src="./assets/logo.png" alt="" />
+        <span>VigilSiddhi OTT</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#home">Home</a>
+        <a href="#rails">Browse</a>
+        <a href="#my-list">My List</a>
+      </nav>
+      <label class="search-box" aria-label="Search titles">
+        <i data-lucide="search" aria-hidden="true"></i>
+        <input id="searchInput" type="search" placeholder="Search" />
+      </label>
+      <div class="profile-chip">
+        <i data-lucide="user-check" aria-hidden="true"></i>
+        <span id="profileName">Guest</span>
+      </div>
+      <button id="logoutButton" class="icon-btn" type="button" aria-label="Log out" title="Log out">
+        <i data-lucide="log-out" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <section id="home" class="hero">
+      <div class="hero-media">
+        <img id="heroImage" src="./assets/logo.png" alt="" />
+      </div>
+      <div class="hero-content">
+        <p id="heroCategory" class="eyebrow">Featured</p>
+        <h2 id="heroTitle">Ready to stream</h2>
+        <p id="heroDescription">Stream your favorite titles in a sleek cinematic experience.</p>
+        <div class="hero-meta" id="heroMeta"></div>
+        <div class="hero-actions">
+          <button id="heroPlayButton" class="primary-btn" type="button">
+            <i data-lucide="play" aria-hidden="true"></i>
+            Play
+          </button>
+          <button id="heroListButton" class="secondary-btn" type="button">
+            <i data-lucide="plus" aria-hidden="true"></i>
+            My List
+          </button>
         </div>
-        <aside class="watch-panel glass-panel">
-          <p class="eyebrow">Now Playing</p>
-          <h3 id="watchTitle">Title</h3>
-          <p id="watchDescription"></p>
-        </aside>
       </div>
     </section>
 
-    <span id="playbackState" hidden></span>
-    <span id="protectionState" hidden></span>
-    <span id="adStatus" hidden></span>
-    <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
-  </body>
+    <section class="quick-actions glass-strip" aria-label="Device actions">
+      <button id="notificationButton" class="ghost-btn" type="button">
+        <i data-lucide="bell" aria-hidden="true"></i>
+        Notifications
+      </button>
+      <button id="registerDeviceButton" class="ghost-btn" type="button">
+        <i data-lucide="fingerprint" aria-hidden="true"></i>
+        Fingerprint
+      </button>
+      <button id="refreshDataButton" class="ghost-btn" type="button">
+        <i data-lucide="refresh-cw" aria-hidden="true"></i>
+        Refresh
+      </button>
+      <span id="deviceStatus" class="device-status">Ready</span>
+    </section>
+
+    <section id="rails" class="rails" aria-label="Video rails"></section>
+    <section id="my-list" class="rails" aria-label="My list"></section>
+  </div>
+
+  <section id="playerOverlay" class="player-overlay" role="dialog" aria-modal="true" aria-label="Video player" hidden>
+    <div class="player-topbar">
+      <button id="closePlayerButton" class="icon-btn" type="button" aria-label="Close player" title="Close player">
+        <i data-lucide="x" aria-hidden="true"></i>
+      </button>
+      <div>
+        <h2 id="playerTitle">Player</h2>
+        <p id="playerMeta"></p>
+      </div>
+      <div class="player-actions">
+        <button id="pipButton" class="icon-btn" type="button" aria-label="Picture in picture"
+          title="Picture in picture">
+          <i data-lucide="picture-in-picture" aria-hidden="true"></i>
+        </button>
+        <button id="fullscreenButton" class="icon-btn" type="button" aria-label="Fullscreen" title="Fullscreen">
+          <i data-lucide="maximize" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="player-grid">
+      <div id="videoContainer" class="video-container" data-shaka-player-container>
+        <video id="videoElement" data-shaka-player playsinline crossorigin="anonymous"
+          poster="./assets/logo.png"></video>
+        <div id="adContainer" class="ad-container"></div>
+        <div id="adOverlay" class="ad-overlay" hidden>
+          <span>Ad break</span>
+          <strong id="adCountdown">5</strong>
+        </div>
+        <div id="playerError" class="player-error" role="alert" hidden>
+          <i data-lucide="triangle-alert" aria-hidden="true"></i>
+          <span>This title is unavailable right now.</span>
+        </div>
+      </div>
+      <aside class="watch-panel glass-panel">
+        <p class="eyebrow">Now Playing</p>
+        <h3 id="watchTitle">Title</h3>
+        <p id="watchDescription"></p>
+      </aside>
+    </div>
+  </section>
+
+  <span id="playbackState" hidden></span>
+  <span id="protectionState" hidden></span>
+  <span id="adStatus" hidden></span>
+  <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+</body>
+
 </html>
