@@ -1,30 +1,6 @@
 {
-  "demo_video": {
-    "key_id": "ed0102030405060708090a0b0c0d0e0f",
-    "key": "f0e0d0c0b0a090807060504030201000"
-  },
-  "free": {
-    "key_id": "ed0102030405060708090a0b0c0d0e0f",
-    "key": "f0e0d0c0b0a090807060504030201000"
-  },
-  "asiacup": {
-    "key_id": "ed0102030405060708090a0b0c0d0e0f",
-    "key": "f0e0d0c0b0a090807060504030201000"
-  },
-  "output_02_04": {
-    "key_id": "ed0102030405060708090a0b0c0d0e0f",
-    "key": "f0e0d0c0b0a090807060504030201000"
-  },
-  "output_2min": {
-    "key_id": "ed0102030405060708090a0b0c0d0e0f",
-    "key": "f0e0d0c0b0a090807060504030201000"
-  },
-  "tmkoc": {
-    "key_id": "ed0102030405060708090a0b0c0d0e0f",
-    "key": "f0e0d0c0b0a090807060504030201000"
-  },
-  "withlogo": {
-    "key_id": "ed0102030405060708090a0b0c0d0e0f",
-    "key": "f0e0d0c0b0a090807060504030201000"
-  }
+  "encrypted": true,
+  "algorithm": "AES-GCM",
+  "iv": "ppGWez2foemYopvU",
+  "ciphertext": "b0plF3MQSSesLoyhZYTKuh2J3Tx7ypYoSe_ZAPzFReEXBwpnleBxgQgMgHPNMWV-_12lhsLqCFaOtPmaOFZKO1goYrZT7-A4KxMW8sIS99Do5h6uzPV-AWK-n64PpF8M3toYGm_SEoiLwoFh_cKPGDAKwaM5Y5PObu7c785Ww5MvMDTikZcHTxbyo9oDIR3HmVHSQjJl4QOQFIy1oBdWW2RAqD6yCoX7njXJQxXBMxJZoi2U5dVhKeggRanc0Vh8x7q6qILgTf5j4V-sQKSbqoeRZQotBuL3mQ2wX3Dgf6GRHxUAaqX8sLxlOnM19gMQM2Q9bKocXT4I1yuRhg_WLRmSrreFdVSXmU73wRr8nxMT8Atcr2cYDgFyHqel6fsncE8zVixv493YOpiZzQLZdZWLetdlKEaVOVmHLR_1sdjXkMdeuap53Gyr112VHAOTd_Jm6gwDALDh1KneEVBoLZ3jKBdrOVyyjFyl2xVS9UodezVQX4VsR8-j1ckkWXDly2GfLk8daB0Sn-t1C7Ge20NAPk3kpp89-tp4lPC-Ua8M_BIjzmJ9K2q_bHe-UfijQpg07zuqBuxyn_naX_ONnBH-kK0atnTwGYl88231BQkCjP6VqoOxTQN2E4-xi-3WZUmul7BMLbzSwucnTB1pCsXu0QRJbGcn7ZmLGQD-NG4y0DS6rtmhmuO2LiF5lQRS0hQ5M1Hmgunp01V6sQacsZLMQ4jPbdPyvwEhGSYkAoc8fgtc1PO_0W9vqxW0yJI79tdjBTbxFXYQ8HG-1NT31iqe93QhznN76ZyIytwAa_69zlqqYBf8qY3FlNsIE7B4kiiKF_xc6skFYWAZrlrDzCjdVrb5cn7cyFhZ6_4oMo2D85-AvSRdJk-hUVkDEZYSPKQUiHUyDfQyeMbvTNTWohAuQEEQUmejns2AMyVZnQnzC9JV5nODf0aQzuI5PwQU"
 }
