@@ -1,4 +1,25 @@
 {
+  "free": {
+    "title": "Free Preview",
+    "description": "A DASH sample wired for GitHub Raw key delivery and CDN playback.",
+    "category": "Featured",
+    "year": "2026",
+    "duration": "2m"
+  },
+  "output_02_04": {
+    "title": "Packaged Sample",
+    "description": "Packaged output folder mapped to the CDN DASH manifest.",
+    "category": "Encoded",
+    "year": "2026",
+    "duration": "Demo"
+  },
+  "output_2min": {
+    "title": "Two Minute Encode",
+    "description": "Short encoded DASH folder for quick playback checks.",
+    "category": "Encoded",
+    "year": "2026",
+    "duration": "2m"
+  },
   "asiacup": {
     "title": "Asia Cup Finals",
     "description": "Watch the thrilling Asia Cup finals.",
@@ -12,5 +33,20 @@
     "category": "Comedy",
     "year": "2018",
     "duration": "1h 54m"
+  },
+  "tmkoc": {
+    "title": "Taarak Mehta Ka Ooltah Chashmah",
+    "description": "A light-hearted sitcom set in the Gokuldham Society, where a group of friends from different backgrounds navigate daily life with humor and wit.",
+    "category": "Comedy",
+    "year": "2008",
+    "duration": "22m",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Cast-of-Taarak-Mehta-Ka-Ooltah-Chashmah-celebrate-the-12-year-anniversary-of-the-show.jpg"
+  },
+  "withlogo": {
+    "title": "With Logo",
+    "description": "Encoded sample mapped to the withlogo DASH manifest on the CDN.",
+    "category": "Encoded",
+    "year": "2026",
+    "duration": "Demo"
   }
 }
