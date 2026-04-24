@@ -80,15 +80,22 @@
     });
 
     if (dataToggle) {
+      const toggleLabel = $("dataToggleLabel");
+      if (toggleLabel) {
+        toggleLabel.textContent = dataToggle.checked ? "Dummy Data" : "Live Data";
+      }
+
       dataToggle.addEventListener("change", (e) => {
         if (e.target.checked) {
           $("dummyDataSection").style.display = "block";
           $("realDataSection").style.display = "none";
+          if (toggleLabel) toggleLabel.textContent = "Dummy Data";
           startDummyData();
           toast("Showing dummy data");
         } else {
           $("dummyDataSection").style.display = "none";
           $("realDataSection").style.display = "block";
+          if (toggleLabel) toggleLabel.textContent = "Live Data";
           stopDummyData();
           loadFromStorage();
           renderAll();
@@ -594,6 +601,7 @@
           renderAll();
           toast("Global QoE loaded from Grafana");
         }
+      }
       // Also fetch CDN metrics
       const cdnMetrics = ["cdn_cache_hit_ratio", "cdn_requests_total", "cdn_error_rate"];
       const cdnResults = await Promise.all(cdnMetrics.map(async m => {
