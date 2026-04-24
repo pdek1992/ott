@@ -190,12 +190,12 @@
 
     const allowedEmails = mergeUnique([
       ...normalizeList(emailsResult.value, ["allowed_emails", "emails", "users"]),
-      ...(config.demoAllowedEmails || [])
+      ...(config.allowedEmails || [])
     ]).map(normalizeEmail);
 
     const allowedUserIds = mergeUnique([
       ...normalizeList(userIdsResult.value, ["allowed_userids", "allowed_user_ids", "userids", "users"]),
-      ...(config.demoAllowedUserIds || [])
+      ...(config.allowedUserIds || [])
     ]).map(normalizeUserId);
 
     const emailOk = email && allowedEmails.includes(email);
@@ -242,20 +242,21 @@
     const descriptions = descriptionsResult.status === "fulfilled" && descriptionsResult.value
       ? descriptionsResult.value
       : {};
-    const mpdMapping = mappingsResult.status === "fulfilled" && mappingsResult.value
+    const mergedMapping = mappingsResult.status === "fulfilled" && mappingsResult.value
       ? mappingsResult.value
       : {};
 
     const byId = new Map();
     for (const item of config.staticVideos || []) {
-      byId.set(item.id, normalizeVideo(item, descriptions[item.id], mpdMapping[item.id]));
+      byId.set(item.id, normalizeVideo(item, descriptions[item.id], mergedMapping[item.id]));
     }
 
     for (const [id, description] of Object.entries(descriptions)) {
-      byId.set(id, normalizeVideo({ id }, description, mpdMapping[id]));
+      byId.set(id, normalizeVideo({ id }, description, mergedMapping[id]));
     }
 
-    for (const [id, mpdUrl] of Object.entries(mpdMapping)) {
+    for (const [id, mpdUrl] of Object.entries(mergedMapping)) {
+      if (typeof mpdUrl !== "string" || !mpdUrl.startsWith("http")) continue;
       const existing = byId.get(id) || { id };
       byId.set(id, normalizeVideo(existing, descriptions[id], mpdUrl));
     }
@@ -263,7 +264,7 @@
     for (const rail of config.rails || []) {
       for (const id of rail.items || []) {
         if (!byId.has(id)) {
-          byId.set(id, normalizeVideo({ id, title: titleFromId(id), category: rail.title }, descriptions[id], mpdMapping[id]));
+          byId.set(id, normalizeVideo({ id, title: titleFromId(id), category: rail.title }, descriptions[id], mergedMapping[id]));
         }
       }
     }
@@ -286,7 +287,7 @@
       maturity: merged.maturity || "U/A",
       mpdUrl: merged.mpdUrl || mappedMpd || "",
       thumbnail: merged.thumbnail || "",
-      adCuePoints: merged.adCuePoints || config.demoAdCuePoints || [],
+      adCuePoints: merged.adCuePoints || config.adCuePoints || [],
       playable: merged.playable !== false
     };
   }
@@ -462,7 +463,10 @@
     els.adStatus.textContent = "Waiting";
     els.videoElement.poster = firstThumbnail(video);
     state.firedAds = new Set();
-    state.adCuePoints = (video.adCuePoints || config.demoAdCuePoints || []).map(Number).filter(Number.isFinite);
+    state.adCuePoints = (video.adCuePoints || config.adCuePoints || []).map(Number).filter(Number.isFinite);
+
+    // ── Observability: start session ────────────────────────
+    if (window.OTT_OBS) window.OTT_OBS.onPlayIntent();
 
     try {
       await ensureShaka();
@@ -492,6 +496,7 @@
       setToast(`Playing ${video.title}`, "success");
     } catch (error) {
       console.error(error);
+      if (window.OTT_OBS) window.OTT_OBS.onError();
       showPlayerError();
       setToast("This title is unavailable right now.", "error");
     }
@@ -540,15 +545,55 @@
 
       state.player.addEventListener("error", (event) => {
         console.error("Shaka error", event.detail);
+        if (window.OTT_OBS) window.OTT_OBS.onError();
         showPlayerError();
       });
 
       state.player.addEventListener("timelineregionenter", onTimelineRegionEnter);
       state.player.addEventListener("timelineregionadded", onTimelineRegionAdded);
+
+      // ── Observability: Shaka ABR / buffering / bandwidth ───
+      state.player.addEventListener("adaptation", (event) => {
+        if (window.OTT_OBS) {
+          const track = state.player.getVariantTracks().find(t => t.active);
+          if (track) window.OTT_OBS.onBitrateChange(track.bandwidth || 0);
+        }
+      });
+
+      state.player.addEventListener("buffering", (event) => {
+        if (window.OTT_OBS) {
+          if (event.buffering) {
+            window.OTT_OBS.onBufferingStart();
+          } else {
+            window.OTT_OBS.onBufferingEnd();
+          }
+        }
+      });
+
       els.videoElement.addEventListener("error", showPlayerError);
-      els.videoElement.addEventListener("timeupdate", handleCuePoints);
+      els.videoElement.addEventListener("canplay", () => {
+        if (window.OTT_OBS) window.OTT_OBS.onFirstFrame();
+      });
+      els.videoElement.addEventListener("play", () => {
+        if (window.OTT_OBS) window.OTT_OBS.onPlayResume();
+      });
+      els.videoElement.addEventListener("pause", () => {
+        if (window.OTT_OBS) window.OTT_OBS.onPlayPause();
+      });
+      els.videoElement.addEventListener("timeupdate", (event) => {
+        handleCuePoints();
+        // Sample bandwidth estimate + dropped frames
+        if (window.OTT_OBS) {
+          const stats = state.player.getStats ? state.player.getStats() : null;
+          if (stats && stats.estimatedBandwidth) {
+            window.OTT_OBS.onBandwidthEstimate(stats.estimatedBandwidth);
+          }
+          window.OTT_OBS.onTimeUpdate(els.videoElement);
+        }
+      });
       els.videoElement.addEventListener("ended", () => {
         els.adStatus.textContent = "Complete";
+        if (window.OTT_OBS) window.OTT_OBS.onVideoEnd();
       });
 
       state.shakaReady = true;
@@ -690,9 +735,7 @@
       return null;
     }
 
-    const direct = store[videoId];
-    const fallback = store.demo_video || Object.values(store)[0];
-    const key = direct || fallback;
+    const key = store[videoId] || Object.values(store)[0];
 
     if (!key || !key.key_id || !key.key) {
       return null;
@@ -742,7 +785,7 @@
   }
 
   async function deriveAesGcmKey(passphrase) {
-    const source = new TextEncoder().encode(passphrase || "OTT_DEMO_FIXED_KEY_2026");
+    const source = new TextEncoder().encode(passphrase || "VIGIL_SIDDHI_PROD_2026");
     const digest = await crypto.subtle.digest("SHA-256", source);
     return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["decrypt"]);
   }
@@ -818,7 +861,7 @@
     els.adStatus.textContent = "Ad break";
 
     if (!config.googleImaAdTag || !window.google || !google.ima || !state.adsLoader) {
-      showDemoAdBreak(reason);
+      showAdBreak(reason);
       return;
     }
 
@@ -832,7 +875,7 @@
       state.adsLoader.requestAds(request);
     } catch (error) {
       console.warn(error);
-      showDemoAdBreak(reason);
+      showAdBreak(reason);
     }
   }
 
@@ -860,7 +903,7 @@
     state.adsManager.start();
   }
 
-  function showDemoAdBreak(reason) {
+  function showAdBreak(reason) {
     if (state.adPlaying) {
       return;
     }
@@ -896,6 +939,9 @@
     clearInterval(state.adTimer);
     state.adPlaying = false;
     els.adOverlay.hidden = true;
+
+    // ── Observability: flush session on close ───────────────
+    if (window.OTT_OBS) await window.OTT_OBS.onVideoEnd().catch(() => undefined);
 
     if (state.player) {
       await state.player.unload().catch(() => undefined);

@@ -1,7 +1,7 @@
 {
-  "name": "OTT Glass",
-  "short_name": "OTT Glass",
-  "description": "Static OTT demo with DASH playback, GitHub Raw allowlists, and ClearKey key loading.",
+  "name": "VigilSiddhi OTT",
+  "short_name": "VigilSiddhi",
+  "description": "A cinematic streaming experience with VigilSiddhi OTT.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

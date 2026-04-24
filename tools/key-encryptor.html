@@ -101,8 +101,8 @@
   <body>
     <main>
       <section>
-        <h1>OTT Key Encryptor</h1>
-        <p class="muted">Paste plaintext keys JSON, encrypt it with the demo fixed passphrase, then upload the output as your GitHub Raw `keys.json`.</p>
+        <h1>OTT JSON Encryptor</h1>
+        <p class="muted">Paste any plaintext OTT JSON file, encrypt it with the fixed passphrase, then upload the encrypted wrapper in its place.</p>
         <label>
           Passphrase
           <input id="passphrase" type="text" />
@@ -110,16 +110,23 @@
       </section>
       <div class="grid">
         <section>
-          <h2>Plain keys JSON</h2>
+          <h2>Plain JSON</h2>
           <textarea id="plain"></textarea>
         </section>
         <section>
-          <h2>Encrypted wrapper</h2>
-          <textarea id="output" readonly></textarea>
+      <div class="grid">
+        <section>
+          <h2>Plain JSON</h2>
+          <textarea id="plain" placeholder='{"movie_id": {"key_id": "...", "key": "..."}}'></textarea>
+        </section>
+        <section>
+          <h2>Encrypted Wrapper</h2>
+          <textarea id="output" placeholder='{"encrypted": true, "iv": "...", "ciphertext": "..."}'></textarea>
         </section>
       </div>
-      <section>
-        <button id="encrypt" type="button">Encrypt</button>
+      <section style="display:flex; gap:12px; align-items:center;">
+        <button id="encrypt" type="button">Encrypt &rarr;</button>
+        <button id="decrypt" type="button">&larr; Decrypt</button>
         <span id="status" class="muted"></span>
       </section>
     </main>
@@ -131,29 +138,45 @@
       const output = document.getElementById("output");
       const status = document.getElementById("status");
 
-      passphrase.value = config.fixedKeyPassphrase || "OTT_DEMO_FIXED_KEY_2026";
-      plain.value = JSON.stringify({
-        demo_video: {
-          key_id: "ed0102030405060708090a0b0c0d0e0f",
-          key: "f0e0d0c0b0a090807060504030201000"
-        }
-      }, null, 2);
+      passphrase.value = config.fixedKeyPassphrase || "VIGIL_SIDDHI_PROD_2026";
 
+      // ── Encrypt ──
       document.getElementById("encrypt").addEventListener("click", async () => {
         try {
-          JSON.parse(plain.value);
-          const wrapper = await encryptText(plain.value, passphrase.value);
+          const text = plain.value.trim();
+          if (!text) return;
+          JSON.parse(text); // validation
+          const wrapper = await encryptText(text, passphrase.value);
           output.value = JSON.stringify(wrapper, null, 2);
           status.textContent = "Encrypted.";
         } catch (error) {
           console.error(error);
-          status.textContent = "Input must be valid JSON.";
+          status.textContent = "Error: Input must be valid JSON.";
+        }
+      });
+
+      // ── Decrypt ──
+      document.getElementById("decrypt").addEventListener("click", async () => {
+        try {
+          const raw = output.value.trim();
+          if (!raw) return;
+          const wrapper = JSON.parse(raw);
+          if (!wrapper.encrypted || !wrapper.ciphertext || !wrapper.iv) {
+             status.textContent = "Error: Not a valid encrypted wrapper.";
+             return;
+          }
+          const decrypted = await decryptText(wrapper, passphrase.value);
+          plain.value = decrypted;
+          status.textContent = "Decrypted.";
+        } catch (error) {
+          console.error(error);
+          status.textContent = "Error: Decryption failed. Check passphrase and wrapper format.";
         }
       });
 
       async function encryptText(text, phrase) {
         const iv = crypto.getRandomValues(new Uint8Array(12));
-        const key = await deriveKey(phrase);
+        const key = await deriveKey(phrase, ["encrypt"]);
         const ciphertext = await crypto.subtle.encrypt(
           { name: "AES-GCM", iv },
           key,
@@ -168,18 +191,38 @@
         };
       }
 
-      async function deriveKey(phrase) {
+      async function decryptText(wrapper, phrase) {
+        const iv = base64UrlToBuffer(wrapper.iv);
+        const ciphertext = base64UrlToBuffer(wrapper.ciphertext);
+        const key = await deriveKey(phrase, ["decrypt"]);
+        
+        const decrypted = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv },
+          key,
+          ciphertext
+        );
+        
+        return new TextDecoder().decode(decrypted);
+      }
+
+      async function deriveKey(phrase, usages) {
         const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(phrase));
-        return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt"]);
+        return crypto.subtle.importKey("raw", digest, "AES-GCM", false, usages);
       }
 
       function bufferToBase64Url(buffer) {
         const bytes = new Uint8Array(buffer);
         let binary = "";
-        for (const byte of bytes) {
-          binary += String.fromCharCode(byte);
-        }
+        for (const byte of bytes) binary += String.fromCharCode(byte);
         return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      }
+
+      function base64UrlToBuffer(base64url) {
+        const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+        const binary = atob(base64);
+        const buffer = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+        return buffer;
       }
     </script>
   </body>

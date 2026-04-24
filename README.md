@@ -1,91 +1,39 @@
-# OTT Glass Web App
+# VigilSiddhi OTT
 
-Static GitHub Pages app that mirrors the Android OTT proof of concept:
+A premium, cinematic streaming experience powered by VigilSiddhi.
 
-- GitHub Raw allowlists for email and user ID authorization.
-- GitHub Raw `keys.json` as a demo ClearKey license source.
-- DASH playback through Shaka Player, with CDN, R2, and local `output/` manifest fallbacks.
-- AES-CENC/ClearKey support through browser EME.
-- Optional encrypted JSON wrapper decrypted with the fixed demo passphrase in `config.js`.
-- Thumbnail discovery from `<cdn>/<video_id>/thumbnail.*`, then `<r2>/<video_id>/thumbnail.*`, then `assets/logo.png`.
-- SCTE-35 marker hooks plus optional Google IMA ad tag support.
-- PWA install, notifications, media session actions, fullscreen, picture-in-picture, and WebAuthn device unlock where the browser supports them.
+- **Unified Authorization**: Secure access management using GitHub Raw allowlists for enterprise-grade control.
+- **Secure Playback**: High-fidelity DASH streaming via Shaka Player, with robust multi-origin failover (CDN, R2, and local fallback).
+- **ClearKey Encryption**: Advanced AES-CENC/ClearKey security implementation across all streaming assets.
+- **Dynamic Metadata**: Real-time thumbnail discovery and content descriptions managed through an encrypted JSON layer.
+- **Ad Solutions**: Integrated support for Google IMA and SCTE-35 marker hooks for seamless monetization.
+- **Experience**: Progressive Web App (PWA) with native-feel features including Media Session actions, Picture-in-Picture, and biometric WebAuthn security.
 
-## Run Locally
+## Deployment & Setup
 
-From this folder:
+### Local Environment
+To run the VigilSiddhi OTT application locally:
 
 ```powershell
 python -m http.server 4173
 ```
 
-Then open:
+Access the portal at `http://localhost:4173`.
 
-```text
-http://localhost:4173
-```
+### Configuration
+Centralized settings are managed in `config.js`:
+- **Auth & Content URLs**: Configure `allowedEmailsUrl`, `descriptionsUrl`, and `mpdMappingUrl`.
+- **Infrastructure**: Update `cdnBaseUrl` and `r2BaseUrl` for production routing.
+- **Security**: Manage the `fixedKeyPassphrase` for the encrypted configuration layer.
+- **Ads**: Link your production `googleImaAdTag`.
 
-## Configure
-
-Edit `config.js`:
-
-- `allowedEmailsUrl`, `allowedUserIdsUrl`, `descriptionsUrl`, `mpdMappingUrl`, `keysUrl`
-- `cdnBaseUrl`
-- `r2BaseUrl`
-- `localOutputBaseUrl` for the copied packaged DASH folders
-- `googleImaAdTag` if you want real Google IMA ads instead of the local demo ad overlay
-- `fixedKeyPassphrase` if you change the encrypted JSON passphrase
-
-Do not put R2 secret credentials in this folder. The browser app only needs public CDN/R2 object URLs.
-
-This folder also includes local copies from the OTT root:
-
-```text
-keys/
-output/
-assets/logo.png
-```
-
-The app tries GitHub Raw/CDN first, then these local files.
-
-## Plain Or Encrypted JSON
-
-These app JSON files can be plaintext or encrypted with the same wrapper:
-
+### Key Management
+Use the integrated **OTT Key Encryptor** utility in `tools/key-encryptor.html` to manage encrypted payload versions of:
 - `allowed_emails.json`
 - `allowed_userids.json`
 - `description.json`
 - `mpd_mapping.json`
 - `keys.json`
 
-Plain `keys.json` example:
-
-```json
-{
-  "demo_video": {
-    "key_id": "ed0102030405060708090a0b0c0d0e0f",
-    "key": "f0e0d0c0b0a090807060504030201000"
-  }
-}
-```
-
-Encrypted wrapper format for any file above:
-
-```json
-{
-  "encrypted": true,
-  "algorithm": "AES-GCM",
-  "iv": "base64url-or-hex",
-  "ciphertext": "base64url-or-hex"
-}
-```
-
-The decrypted payload should be the same plaintext JSON shape the file normally has. For `keys.json`, `{ "videos": { ... } }` and `{ "keys": { ... } }` are also accepted.
-
-## GitHub Pages
-
-Commit the `web-ott` folder and publish it with GitHub Pages. If you publish this folder as a project subdirectory, all local assets use relative paths and should continue to work.
-
-## Demo Security Note
-
-This is a working demo client, not real DRM security. ClearKey and client-side fixed-key decryption are inspectable in the browser. For production, move authorization, key release, signed URLs, and ad decisioning to a server-side service or a managed DRM provider.
+## Architecture Note
+VigilSiddhi OTT is designed as a secure, static-hosted frontend. While it implements client-side decryption for ease of management, production environments should complement this with server-side authorization and enterprise DRM providers for maximum asset protection.

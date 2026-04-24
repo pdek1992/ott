@@ -1,4 +1,4 @@
-const CACHE_NAME = "ott-glass-shell-v1";
+const CACHE_NAME = "ott-glass-shell-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,7 +6,12 @@ const APP_SHELL = [
   "./config.js",
   "./app.js",
   "./manifest.webmanifest",
-  "./assets/logo.png"
+  "./assets/logo.png",
+  "./keys/allowed_emails.json",
+  "./keys/allowed_userids.json",
+  "./keys/description.json",
+  "./keys/keys.json",
+  "./keys/mpd_mapping.json"
 ];
 
 self.addEventListener("install", (event) => {

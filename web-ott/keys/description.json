@@ -1,10 +1,32 @@
 {
+  "free": {
+    "title": "Free Preview",
+    "description": "Start watching instantly with a smooth premium playback experience.",
+    "category": "Featured",
+    "year": "2026",
+    "duration": "2m"
+  },
+  "output_02_04": {
+    "title": "Weekend Special",
+    "description": "A featured pick ready for streaming.",
+    "category": "Featured",
+    "year": "2026",
+    "duration": "Preview"
+  },
+  "output_2min": {
+    "title": "Quick Preview",
+    "description": "A short title for a fast watch.",
+    "category": "Featured",
+    "year": "2026",
+    "duration": "2m"
+  },
   "asiacup": {
     "title": "Asia Cup Finals",
-    "description": "Watch the thrilling Asia Cup finals.",
+    "description": "India vs Pakistan action from a packed cricket stadium.",
     "category": "Sports",
     "year": "2026",
-    "duration": "2h 15m"
+    "duration": "2h 15m",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/8/89/Test_Match_Cricket_India_Vs._Pakistan.jpg"
   },
   "blackmail": {
     "title": "Blackmail",
@@ -18,6 +40,14 @@
     "description": "A light-hearted sitcom set in the Gokuldham Society, where a group of friends from different backgrounds navigate daily life with humor and wit.",
     "category": "Comedy",
     "year": "2008",
-    "duration": "22m"
+    "duration": "22m",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Cast-of-Taarak-Mehta-Ka-Ooltah-Chashmah-celebrate-the-12-year-anniversary-of-the-show.jpg"
+  },
+  "withlogo": {
+    "title": "Studio Preview",
+    "description": "A polished sample from the OTT collection.",
+    "category": "Featured",
+    "year": "2026",
+    "duration": "Preview"
   }
 }

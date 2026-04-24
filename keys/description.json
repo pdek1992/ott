@@ -4,25 +4,36 @@
     "description": "Start watching instantly with a smooth premium playback experience.",
     "category": "Featured",
     "year": "2026",
-    "duration": "2m"
+    "duration": "2m",
+    "thumbnail": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=640&q=80"
   },
   "output_02_04": {
     "title": "Weekend Special",
-    "description": "A featured pick ready for streaming.",
+    "description": "A featured weekend pick ready for streaming.",
     "category": "Featured",
     "year": "2026",
-    "duration": "Preview"
+    "duration": "Preview",
+    "thumbnail": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=640&q=80"
   },
   "output_2min": {
     "title": "Quick Preview",
     "description": "A short title for a fast watch.",
     "category": "Featured",
     "year": "2026",
-    "duration": "2m"
+    "duration": "2m",
+    "thumbnail": "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=640&q=80"
+  },
+  "withlogo": {
+    "title": "Studio Preview",
+    "description": "A polished sample from the VigilSiddhi OTT collection.",
+    "category": "Featured",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=640&q=80"
   },
   "asiacup": {
     "title": "Asia Cup Finals",
-    "description": "India vs Pakistan action from a packed cricket stadium.",
+    "description": "India vs Pakistan action from a packed cricket stadium. Edge-of-your-seat live action.",
     "category": "Sports",
     "year": "2026",
     "duration": "2h 15m",
@@ -30,24 +41,117 @@
   },
   "blackmail": {
     "title": "Blackmail",
-    "description": "Starring Irrfan Khan, Kirti Kulhari, Divya Dutta, Arunoday Singh and Omi Vaidya .",
+    "description": "Starring Irrfan Khan, Kirti Kulhari, Divya Dutta, Arunoday Singh and Omi Vaidya. A dark comedy thriller.",
     "category": "Comedy",
     "year": "2018",
-    "duration": "1h 54m"
+    "duration": "1h 54m",
+    "thumbnail": "https://images.unsplash.com/photo-1572177812156-58036aae439c?w=640&q=80"
   },
   "tmkoc": {
     "title": "Taarak Mehta Ka Ooltah Chashmah",
-    "description": "A light-hearted sitcom set in the Gokuldham Society, where a group of friends from different backgrounds navigate daily life with humor and wit.",
+    "description": "A light-hearted sitcom in the Gokuldham Society, where friends from different backgrounds navigate daily life with humor and wit.",
     "category": "Comedy",
     "year": "2008",
     "duration": "22m",
     "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Cast-of-Taarak-Mehta-Ka-Ooltah-Chashmah-celebrate-the-12-year-anniversary-of-the-show.jpg"
   },
-  "withlogo": {
-    "title": "Studio Preview",
-    "description": "A polished sample from the OTT collection.",
-    "category": "Featured",
-    "year": "2026",
-    "duration": "Preview"
+  "tears_of_steel": {
+    "title": "Tears of Steel",
+    "description": "A haunting sci-fi short where robots invade Amsterdam. Stunning VFX from the Blender Foundation open movie project.",
+    "category": "Sci-Fi",
+    "year": "2012",
+    "duration": "12m",
+    "maturity": "U/A",
+    "thumbnail": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=640&q=80"
+  },
+  "big_buck_bunny": {
+    "title": "Big Buck Bunny",
+    "description": "A giant rabbit befriends woodland creatures — until three mischievous rodents push him too far. A Blender Foundation classic.",
+    "category": "Animation",
+    "year": "2008",
+    "duration": "9m 56s",
+    "maturity": "U",
+    "thumbnail": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=640&q=80"
+  },
+  "bbb_dark_truths": {
+    "title": "Big Buck Bunny — Dark Truths",
+    "description": "A reimagining of the beloved animated classic with a darker, cinematic tone. Shaka demo edition with ABR.",
+    "category": "Animation",
+    "year": "2012",
+    "duration": "10m",
+    "maturity": "U/A",
+    "thumbnail": "https://images.unsplash.com/photo-1541562232579-512a21360020?w=640&q=80"
+  },
+  "sintel": {
+    "title": "Sintel",
+    "description": "A lone heroine named Sintel embarks on a dangerous quest to find her baby dragon, Scales. A Blender Foundation fantasy epic.",
+    "category": "Animation",
+    "year": "2010",
+    "duration": "14m 48s",
+    "maturity": "PG",
+    "thumbnail": "https://images.unsplash.com/photo-1628155930542-3c7a64e2aed1?w=640&q=80"
+  },
+  "elephant_dream": {
+    "title": "Elephant's Dream",
+    "description": "The world's first open movie — a surrealist journey through impossible mechanical worlds. By the Blender Foundation.",
+    "category": "Animation",
+    "year": "2006",
+    "duration": "10m 54s",
+    "maturity": "U",
+    "thumbnail": "https://images.unsplash.com/photo-1557990010-6e3c65a7d8c7?w=640&q=80"
+  },
+  "cosmos_laundromat": {
+    "title": "Cosmos Laundromat",
+    "description": "A sheep on a remote island meets a mysterious stranger who grants him infinite lives. Award-winning Blender open short.",
+    "category": "Animation",
+    "year": "2015",
+    "duration": "12m 10s",
+    "maturity": "U/A",
+    "thumbnail": "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=640&q=80"
+  },
+  "angel_one": {
+    "title": "Angel One",
+    "description": "A celestial sci-fi adventure with stunning ABR-adaptive streaming. Shaka Player official demo asset.",
+    "category": "Sci-Fi",
+    "year": "2016",
+    "duration": "4m",
+    "maturity": "U",
+    "thumbnail": "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=640&q=80"
+  },
+  "heliocentrism": {
+    "title": "Heliocentrism",
+    "description": "An immersive space documentary journey through our solar system. Shaka Player demo with multi-bitrate adaptive streaming.",
+    "category": "Documentary",
+    "year": "2017",
+    "duration": "3m",
+    "maturity": "U",
+    "thumbnail": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=640&q=80"
+  },
+  "multirate_dash": {
+    "title": "Multi-Rate ABR Baseline",
+    "description": "DASH-IF industry-standard multi-bitrate reference stream. Demonstrates adaptive bitrate switching across H.264 renditions.",
+    "category": "Reference Streams",
+    "year": "2023",
+    "duration": "Loop",
+    "maturity": "U",
+    "thumbnail": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=640&q=80"
+  },
+  "hd_multireso": {
+    "title": "HD Reference Standard",
+    "description": "Qualcomm HD multi-resolution DASH reference stream for verifying ABR playback at high definition quality levels.",
+    "category": "Reference Streams",
+    "year": "2023",
+    "duration": "Loop",
+    "maturity": "U",
+    "thumbnail": "https://images.unsplash.com/photo-1536240478700-b869ad10e128?w=640&q=80"
+  },
+  "bitmovin_demo": {
+    "title": "Bitmovin Gold Standard",
+    "description": "Bitmovin's reference DASH stream — a benchmark for adaptive video delivery and player evaluation.",
+    "category": "Reference Streams",
+    "year": "2023",
+    "duration": "Feature",
+    "maturity": "U",
+    "thumbnail": "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=640&q=80"
   }
 }

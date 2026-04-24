@@ -45,7 +45,7 @@
       state.currentUser = session;
       await enterApp();
     } else {
-      setAuthMessage("Sign in with a whitelisted email or user ID.");
+      setAuthMessage("Sign in to continue.");
     }
   }
 
@@ -90,8 +90,8 @@
       "playerMeta",
       "watchTitle",
       "watchDescription",
-      "licenseStatus",
-      "drmStatus",
+      "playbackState",
+      "protectionState",
       "adStatus",
       "toastStack"
     ];
@@ -154,12 +154,12 @@
     }
 
     setBusy(els.loginButton, true);
-    setAuthMessage("Checking GitHub allowlists...");
+    setAuthMessage("Checking access...");
 
     try {
       const auth = await authorize(email, userId);
       if (!auth.ok) {
-        setAuthMessage("Not authorized by GitHub allowlist.", true);
+        setAuthMessage("Unable to sign in. Please check your details.", true);
         return;
       }
 
@@ -173,10 +173,10 @@
 
       localStorage.setItem(SESSION_KEY, JSON.stringify(state.currentUser));
       await enterApp();
-      setToast("Signed in with GitHub allowlist.", "success");
+      setToast("Signed in.", "success");
     } catch (error) {
       console.error(error);
-      setAuthMessage("Authorization files could not be loaded.", true);
+      setAuthMessage("Unable to sign in right now.", true);
     } finally {
       setBusy(els.loginButton, false);
     }
@@ -184,8 +184,8 @@
 
   async function authorize(email, userId) {
     const [emailsResult, userIdsResult] = await Promise.allSettled([
-      fetchJson(config.allowedEmailsUrl),
-      fetchJson(config.allowedUserIdsUrl)
+      fetchFirstJson([config.allowedEmailsUrl, config.localAllowedEmailsUrl]),
+      fetchFirstJson([config.allowedUserIdsUrl, config.localAllowedUserIdsUrl])
     ]);
 
     const allowedEmails = mergeUnique([
@@ -217,7 +217,7 @@
   }
 
   async function refreshData() {
-    setToast("Refreshing GitHub metadata...");
+    setToast("Refreshing...");
     state.keyStore = null;
     await loadCatalog();
     renderApp();
@@ -235,8 +235,8 @@
 
   async function loadCatalog() {
     const [descriptionsResult, mappingsResult] = await Promise.allSettled([
-      fetchJson(config.descriptionsUrl),
-      fetchJson(config.mpdMappingUrl)
+      fetchFirstJson([config.descriptionsUrl, config.localDescriptionsUrl]),
+      fetchFirstJson([config.mpdMappingUrl, config.localMpdMappingUrl])
     ]);
 
     const descriptions = descriptionsResult.status === "fulfilled" && descriptionsResult.value
@@ -308,7 +308,7 @@
     els.heroDescription.textContent = video.description;
     els.heroMeta.innerHTML = "";
 
-    for (const value of [video.year, video.duration, video.maturity, "DASH", "ClearKey"]) {
+    for (const value of [video.year, video.duration, video.maturity]) {
       if (!value) {
         continue;
       }
@@ -435,7 +435,6 @@
       <span class="tile-meta">
         ${video.year ? `<span>${escapeHtml(video.year)}</span>` : ""}
         ${video.duration ? `<span>${escapeHtml(video.duration)}</span>` : ""}
-        <span>DASH</span>
       </span>
     `;
 
@@ -458,8 +457,8 @@
     els.playerMeta.textContent = [video.year, video.duration, video.category].filter(Boolean).join("  ");
     els.watchTitle.textContent = video.title;
     els.watchDescription.textContent = video.description;
-    els.licenseStatus.textContent = "Fetching GitHub Raw";
-    els.drmStatus.textContent = "ClearKey";
+    els.playbackState.textContent = "";
+    els.protectionState.textContent = "";
     els.adStatus.textContent = "Waiting";
     els.videoElement.poster = firstThumbnail(video);
     state.firedAds = new Set();
@@ -479,10 +478,10 @@
             }
           }
         });
-        els.licenseStatus.textContent = `Key ${cleanHex(key.key_id).slice(0, 8)} from GitHub`;
+        els.playbackState.textContent = "Ready";
       } else {
         state.player.configure({ drm: { clearKeys: {} } });
-        els.licenseStatus.textContent = "No key needed";
+        els.playbackState.textContent = "Ready";
       }
 
       const loadedUrl = await loadManifestWithFallback(video);
@@ -494,7 +493,7 @@
     } catch (error) {
       console.error(error);
       showPlayerError();
-      setToast("Video file or segment is not available.", "error");
+      setToast("This title is unavailable right now.", "error");
     }
   }
 
@@ -580,7 +579,7 @@
       }
     }
 
-    throw lastError || new Error("No manifest URL worked.");
+    throw lastError || new Error("Playback could not start.");
   }
 
   function manifestCandidates(video) {
@@ -593,6 +592,9 @@
     }
     if (config.r2BaseUrl) {
       urls.push(`${trimSlash(config.r2BaseUrl)}/${encodeURIComponent(video.id)}/manifest.mpd`);
+    }
+    if (config.localOutputBaseUrl) {
+      urls.push(`${trimSlash(config.localOutputBaseUrl)}/${encodeURIComponent(video.id)}/manifest.mpd`);
     }
     return mergeUnique(urls);
   }
@@ -704,19 +706,18 @@
       return state.keyStore;
     }
 
-    const raw = await fetchJson(config.keysUrl);
-    const decrypted = await maybeDecryptKeyStore(raw);
-    state.keyStore = normalizeKeyStore(decrypted);
+    const raw = await fetchFirstJson([config.keysUrl, config.localKeysUrl]);
+    state.keyStore = normalizeKeyStore(raw);
     return state.keyStore;
   }
 
-  async function maybeDecryptKeyStore(raw) {
+  async function maybeDecryptJson(raw) {
     if (!raw || !raw.encrypted) {
       return raw;
     }
 
     if (!crypto.subtle) {
-      throw new Error("Web Crypto is required to decrypt keys.");
+      throw new Error("Playback could not start.");
     }
 
     const iv = decodeFlexibleBytes(raw.iv || raw.nonce);
@@ -748,13 +749,13 @@
 
   function onTimelineRegionAdded(event) {
     if (isScteRegion(event.detail)) {
-      els.adStatus.textContent = "SCTE marker detected";
+      els.adStatus.textContent = "Ad break";
     }
   }
 
   function onTimelineRegionEnter(event) {
     if (isScteRegion(event.detail)) {
-      requestAdBreak("SCTE-35 marker");
+      requestAdBreak("Ad break");
     }
   }
 
@@ -783,7 +784,7 @@
     for (const cue of state.adCuePoints) {
       if (time >= cue && !state.firedAds.has(cue)) {
         state.firedAds.add(cue);
-        requestAdBreak(`cue ${Math.round(cue)}s`);
+        requestAdBreak("Ad break");
         break;
       }
     }
@@ -814,7 +815,7 @@
   }
 
   function requestAdBreak(reason) {
-    els.adStatus.textContent = reason || "Ad break";
+    els.adStatus.textContent = "Ad break";
 
     if (!config.googleImaAdTag || !window.google || !google.ima || !state.adsLoader) {
       showDemoAdBreak(reason);
@@ -867,7 +868,7 @@
     state.adPlaying = true;
     els.videoElement.pause();
     els.adOverlay.hidden = false;
-    els.adStatus.textContent = reason ? `Demo ad: ${reason}` : "Demo ad";
+    els.adStatus.textContent = "Ad break";
 
     let seconds = 5;
     els.adCountdown.textContent = String(seconds);
@@ -1051,29 +1052,29 @@
   async function detectPlaybackDevice() {
     const parts = [];
     if (window.shaka) {
-      parts.push("Shaka ready");
+      parts.push("Ready");
     }
 
     if (navigator.requestMediaKeySystemAccess) {
       const clearKey = await supportsKeySystem("org.w3.clearkey");
       const widevine = await supportsKeySystem("com.widevine.alpha");
       if (clearKey) {
-        parts.push("ClearKey supported");
+        parts.push("Ready");
       }
       if (widevine) {
-        parts.push("Widevine available");
+        parts.push("Ready");
       }
       if (widevine && /Android/i.test(navigator.userAgent)) {
-        parts.push("OEMCrypto handled by Android if present");
+        parts.push("Ready");
       }
     }
 
     if (!parts.length) {
-      parts.push("DASH support will be checked at playback");
+      parts.push("Ready");
     }
 
     if (els.deviceStatus) {
-      els.deviceStatus.textContent = parts.join(" | ");
+      els.deviceStatus.textContent = mergeUnique(parts).join(" | ");
     }
   }
 
@@ -1174,6 +1175,9 @@
       if (config.r2BaseUrl) {
         candidates.push(`${trimSlash(config.r2BaseUrl)}/${encodeURIComponent(video.id)}/${fileName}`);
       }
+      if (config.localOutputBaseUrl) {
+        candidates.push(`${trimSlash(config.localOutputBaseUrl)}/${encodeURIComponent(video.id)}/${fileName}`);
+      }
     }
     candidates.push(config.logoUrl || "./assets/logo.png");
     return mergeUnique(candidates);
@@ -1214,7 +1218,19 @@
     if (!response.ok) {
       throw new Error(`Fetch failed: ${response.status} ${url}`);
     }
-    return response.json();
+    return maybeDecryptJson(await response.json());
+  }
+
+  async function fetchFirstJson(urls) {
+    let lastError = null;
+    for (const url of mergeUnique(urls || [])) {
+      try {
+        return await fetchJson(url);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error("No JSON URL configured.");
   }
 
   function withCacheBust(url) {

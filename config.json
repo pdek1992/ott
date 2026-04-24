@@ -1,0 +1,35 @@
+{
+  "input_dir": "input",
+  "success_dir": "success_video",
+  "failed_dir": "failed_video",
+  "output_dir": "output",
+  "renditions": [
+    {
+      "name": "360p",
+      "resolution": "640x360",
+      "bitrate": "800k",
+      "audio_bitrate": "128k"
+    },
+    {
+      "name": "720p",
+      "resolution": "1280x720",
+      "bitrate": "2500k",
+      "audio_bitrate": "192k"
+    }
+  ],
+  "segment_duration": 6,
+  "fps": 25,
+  "gop_size": 150,
+  "preset": "veryfast",
+  "encryption": {
+    "enabled": true,
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "r2_config": {
+    "endpoint_url": "https://e63579be88693f2808e148ec66d99bb4.r2.cloudflarestorage.com",
+    "access_key_id": "bedad63e7d77b0333f1919b3e1108de3",
+    "secret_access_key": "8221fc741872946cc48a5d03bc84960f85693d9f44208113c6c508488901f5b9",
+    "bucket_name": "ott"
+  }
+}

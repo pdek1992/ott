@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#05070b" />
+  <meta name="description" content="VigilSiddhi OTT – Real-time QoE and CDN observability dashboard powered by Grafana Cloud." />
+  <title>VigilSiddhi OTT – Observability Dashboard</title>
+  <link rel="icon" href="./assets/logo.png" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./dashboard.css" />
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" />
+  <!-- Chart.js for sparklines -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+  <script defer src="./observability_config.js"></script>
+  <script defer src="./dashboard.js"></script>
+</head>
+<body class="dash-body">
+
+  <!-- ── Cinema backdrop ───────────────────────── -->
+  <div class="cinema-backdrop" aria-hidden="true"></div>
+
+  <!-- ── Topbar ────────────────────────────────── -->
+  <header class="dash-topbar glass-strip">
+    <a class="brand" href="./index.html" aria-label="Back to VigilSiddhi OTT">
+      <img src="./assets/logo.png" alt="" />
+      <span>VigilSiddhi OTT</span>
+    </a>
+    <div class="dash-nav">
+      <a href="./index.html" class="ghost-btn" id="backHome">
+        <i data-lucide="tv-2" aria-hidden="true"></i> Player
+      </a>
+      <span class="dash-title">
+        <i data-lucide="activity" aria-hidden="true"></i>
+        Observability
+      </span>
+    </div>
+    <div class="dash-live-indicator" id="liveIndicator">
+      <span class="pulse-dot"></span>
+      <span id="liveStatus">Connecting…</span>
+    </div>
+    <button id="refreshDash" class="icon-btn" type="button" title="Refresh metrics" aria-label="Refresh metrics">
+      <i data-lucide="refresh-cw" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <!-- ── Alert banner ──────────────────────────── -->
+  <div id="alertBanner" class="alert-banner" hidden role="alert" aria-live="assertive">
+    <i data-lucide="triangle-alert" aria-hidden="true"></i>
+    <span id="alertText"></span>
+  </div>
+
+  <!-- ── Dashboard grid ────────────────────────── -->
+  <main class="dash-main" id="dashMain">
+
+    <!-- ══ SECTION: QoE Overview ═══════════════ -->
+    <section class="dash-section" aria-labelledby="qoeHeading">
+      <h2 class="section-heading" id="qoeHeading">
+        <i data-lucide="play-circle" aria-hidden="true"></i>
+        Client QoE Metrics
+        <span class="section-meta" id="qoeSessionCount">0 sessions</span>
+      </h2>
+
+      <div class="kpi-row">
+        <div class="kpi-card glass-panel" id="kpiStartup">
+          <div class="kpi-icon kpi-blue"><i data-lucide="timer" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Avg Startup Time</span>
+            <span class="kpi-value" id="valStartup">— s</span>
+            <span class="kpi-sub" id="subStartup">Target &lt; 3 s</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkStartup" width="80" height="32"></canvas>
+        </div>
+
+        <div class="kpi-card glass-panel" id="kpiRebuffer">
+          <div class="kpi-icon kpi-amber"><i data-lucide="wifi-off" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Rebuffer Ratio</span>
+            <span class="kpi-value" id="valRebuffer">— %</span>
+            <span class="kpi-sub" id="subRebuffer">Target &lt; 3 %</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkRebuffer" width="80" height="32"></canvas>
+        </div>
+
+        <div class="kpi-card glass-panel" id="kpiBitrate">
+          <div class="kpi-icon kpi-green"><i data-lucide="gauge" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Avg Bitrate</span>
+            <span class="kpi-value" id="valBitrate">— kbps</span>
+            <span class="kpi-sub">Adaptive quality</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkBitrate" width="80" height="32"></canvas>
+        </div>
+
+        <div class="kpi-card glass-panel" id="kpiError">
+          <div class="kpi-icon kpi-red"><i data-lucide="circle-alert" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Error Rate</span>
+            <span class="kpi-value" id="valError">—</span>
+            <span class="kpi-sub">Sessions with errors</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkError" width="80" height="32"></canvas>
+        </div>
+
+        <div class="kpi-card glass-panel" id="kpiBandwidth">
+          <div class="kpi-icon kpi-cyan"><i data-lucide="arrow-down-to-line" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Avg Bandwidth</span>
+            <span class="kpi-value" id="valBandwidth">— kbps</span>
+            <span class="kpi-sub">Client estimate</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkBandwidth" width="80" height="32"></canvas>
+        </div>
+
+        <div class="kpi-card glass-panel" id="kpiDropped">
+          <div class="kpi-icon kpi-purple"><i data-lucide="film" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Dropped Frames</span>
+            <span class="kpi-value" id="valDropped">—</span>
+            <span class="kpi-sub">Current session</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkDropped" width="80" height="32"></canvas>
+        </div>
+      </div>
+
+      <!-- QoE time-series chart -->
+      <div class="chart-card glass-panel">
+        <div class="chart-header">
+          <h3>QoE time series (last 20 pushes)</h3>
+          <span class="chart-legend">
+            <span class="legend-dot" style="background:var(--accent)"></span> Startup
+            <span class="legend-dot" style="background:#ffb347"></span> Rebuffer %
+            <span class="legend-dot" style="background:#7dffbf"></span> Bitrate ÷ 100
+          </span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="qoeTimeSeries" aria-label="QoE time series chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Device breakdown -->
+      <div class="chart-row">
+        <div class="chart-card glass-panel chart-half">
+          <div class="chart-header"><h3>Sessions by Device Type</h3></div>
+          <div class="chart-wrap chart-small">
+            <canvas id="devicePie" aria-label="Sessions by device type"></canvas>
+          </div>
+        </div>
+        <div class="chart-card glass-panel chart-half">
+          <div class="chart-header"><h3>Sessions by Network Type</h3></div>
+          <div class="chart-wrap chart-small">
+            <canvas id="networkPie" aria-label="Sessions by network type"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SECTION: CDN Metrics ═════════════════ -->
+    <section class="dash-section" aria-labelledby="cdnHeading">
+      <h2 class="section-heading" id="cdnHeading">
+        <i data-lucide="cloud" aria-hidden="true"></i>
+        CDN Metrics — Cloudflare
+        <span class="section-meta" id="cdnLastUpdate">Not yet fetched</span>
+      </h2>
+
+      <div class="kpi-row">
+        <div class="kpi-card glass-panel" id="kpiCacheHit">
+          <div class="kpi-icon kpi-green"><i data-lucide="zap" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Cache Hit Ratio</span>
+            <span class="kpi-value" id="valCacheHit">— %</span>
+            <span class="kpi-sub" id="subCacheHit">Target &gt; 70 %</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkCacheHit" width="80" height="32"></canvas>
+        </div>
+
+        <div class="kpi-card glass-panel" id="kpiCdnRequests">
+          <div class="kpi-icon kpi-cyan"><i data-lucide="arrow-up-down" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Total Requests</span>
+            <span class="kpi-value" id="valCdnRequests">—</span>
+            <span class="kpi-sub">Last hour</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkCdnRequests" width="80" height="32"></canvas>
+        </div>
+
+        <div class="kpi-card glass-panel" id="kpiCdnBandwidth">
+          <div class="kpi-icon kpi-blue"><i data-lucide="database" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">Bandwidth Served</span>
+            <span class="kpi-value" id="valCdnBandwidth">— MB</span>
+            <span class="kpi-sub" id="subCdnBandwidth">CDN edge</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkCdnBandwidth" width="80" height="32"></canvas>
+        </div>
+
+        <div class="kpi-card glass-panel" id="kpiCdnError">
+          <div class="kpi-icon kpi-red"><i data-lucide="server-crash" aria-hidden="true"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">CDN Error Rate</span>
+            <span class="kpi-value" id="valCdnError">— %</span>
+            <span class="kpi-sub" id="subCdnError">Target &lt; 2 %</span>
+          </div>
+          <canvas class="kpi-spark" id="sparkCdnError" width="80" height="32"></canvas>
+        </div>
+      </div>
+
+      <!-- CDN time-series -->
+      <div class="chart-card glass-panel">
+        <div class="chart-header">
+          <h3>CDN time series (last 20 polls)</h3>
+          <span class="chart-legend">
+            <span class="legend-dot" style="background:#7dffbf"></span> Cache Hit %
+            <span class="legend-dot" style="background:#ff5f7a"></span> Error Rate %
+          </span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="cdnTimeSeries" aria-label="CDN metrics time series chart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SECTION: Correlation ══════════════════ -->
+    <section class="dash-section" aria-labelledby="corrHeading">
+      <h2 class="section-heading" id="corrHeading">
+        <i data-lucide="git-compare" aria-hidden="true"></i>
+        Correlation Panels
+      </h2>
+
+      <div class="chart-row">
+        <div class="chart-card glass-panel chart-half">
+          <div class="chart-header"><h3>Rebuffer vs Cache Hit Ratio</h3></div>
+          <div class="chart-wrap">
+            <canvas id="corrRebufferCache" aria-label="Rebuffer ratio vs cache hit ratio correlation"></canvas>
+          </div>
+        </div>
+        <div class="chart-card glass-panel chart-half">
+          <div class="chart-header"><h3>Bitrate vs Client Bandwidth</h3></div>
+          <div class="chart-wrap">
+            <canvas id="corrBitrateBandwidth" aria-label="Avg bitrate vs client bandwidth correlation"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SECTION: Alerts ═══════════════════════ -->
+    <section class="dash-section" aria-labelledby="alertsHeading">
+      <h2 class="section-heading" id="alertsHeading">
+        <i data-lucide="bell-ring" aria-hidden="true"></i>
+        Active Alert Rules
+      </h2>
+
+      <div class="alert-table-wrap glass-panel">
+        <table class="alert-table" id="alertTable" aria-label="Alert rules and status">
+          <thead>
+            <tr>
+              <th>Alert</th>
+              <th>Threshold</th>
+              <th>Current Value</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="alertTableBody">
+            <tr><td colspan="4" class="table-empty">Waiting for first metric push…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ SECTION: Grafana Cloud Embed Link ════ -->
+    <section class="dash-section" aria-labelledby="grafanaHeading">
+      <h2 class="section-heading" id="grafanaHeading">
+        <i data-lucide="layout-dashboard" aria-hidden="true"></i>
+        Grafana Cloud View
+      </h2>
+      <div class="grafana-link-card glass-panel">
+        <div class="grafana-info">
+          <p>Access the full, high-fidelity dashboards with deep historical trends and advanced alerting on the core Grafana Cloud platform.</p>
+        </div>
+        <a id="grafanaLink" class="primary-btn" href="https://vigilsiddhi.grafana.net" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="external-link" aria-hidden="true"></i>
+          Open Cloud Dashboard
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────── -->
+  <footer class="dash-footer">
+    <span>VigilSiddhi OTT Observability · Grafana Cloud Free Tier · &lt; 10 k series</span>
+    <span id="footerTs">Last updated: —</span>
+  </footer>
+
+  <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+
+</body>
+</html>

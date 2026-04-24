@@ -1,0 +1,32 @@
+name: CDN Metrics → Grafana Cloud
+
+on:
+  schedule:
+    # Run every minute (GitHub Actions minimum granularity)
+    - cron: '* * * * *'
+  workflow_dispatch:  # allow manual trigger
+
+jobs:
+  collect-cdn-metrics:
+    name: Collect Cloudflare CDN metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run CDN collector
+        env:
+          CF_ACCOUNT_ID:        ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ZONE_ID:           ${{ secrets.CF_ZONE_ID }}
+          CF_API_TOKEN:         ${{ secrets.CF_API_TOKEN }}
+          GRAFANA_PROM_URL:     ${{ secrets.GRAFANA_PROM_URL }}
+          GRAFANA_PROM_USER:    ${{ secrets.GRAFANA_PROM_USER }}
+          GRAFANA_PROM_API_KEY: ${{ secrets.GRAFANA_PROM_API_KEY }}
+        run: node cdn_collector.js
