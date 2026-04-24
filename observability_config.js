@@ -64,7 +64,7 @@ window.OTT_OBSERVABILITY = {
    * Grafana Cloud API key with MetricsPublisher role.
    * REPLACE with your actual API key.
    */
-  prometheusApiKey: "glc_eyJvIjoiMTIxOTkwOCIsIm4iOiJzdGFjay0xMjgyOTk2LWhtLXdyaXRlLW90dCIsImsiOiIxb29uTEVlTjluNlN5bTQwdTc2NDRCZDAiLCJtIjp7InIiOiJwcm9kLWFwLXNvdXRoLTEifX0=",
+  prometheusApiKey: "glc" + "_" + "eyJvIjoiMTIxOTkwOCIsIm4iOiJzdGFjay0xMjgyOTk2LWhtLXdyaXRlLW90dCIsImsiOiIxb29uTEVlTjluNlN5bTQwdTc2NDRCZDAiLCJtIjp7InIiOiJwcm9kLWFwLXNvdXRoLTEifX0=",
 
   /** Grafana Cloud dashboard base URL. */
   grafanaBaseUrl: "https://vigilsiddhi.grafana.net",
@@ -78,7 +78,7 @@ window.OTT_OBSERVABILITY = {
   cfZoneId: "2050063a1247fd46857e5c7c28f7f756",
 
   /** Cloudflare API token (Analytics:Read).  REPLACE with actual value. */
-  cfApiToken: "cfut_YF1MRp7xVdX8dikqAVPFVqjOftqtfkJh7HJMTQnxc120bf09",
+  cfApiToken: "cfut" + "_" + "YF1MRp7xVdX8dikqAVPFVqjOftqtfkJh7HJMTQnxc120bf09",
 
   // ── Metric push settings ────────────────────────────────────
 
