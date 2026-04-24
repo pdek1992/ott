@@ -51,31 +51,47 @@
   let qoeHistory = [];   // array of aggregated QoE objects
   let cdnHistory = [];   // array of CDN objects
   let charts     = {};   // Chart.js instances
+  let dummyInterval = null;
 
   /* ── boot ─────────────────────────────────────────────────── */
   window.addEventListener("DOMContentLoaded", () => {
     initGrafanaLink();
-    loadFromStorage();
     buildCharts();
-    renderAll();
     startPolling();
 
-    $("refreshDash").addEventListener("click", () => {
+    const dataToggle = $("dataToggle");
+    
+    // Initial load
+    if (dataToggle && dataToggle.checked) {
+      startDummyData();
+    } else {
       loadFromStorage();
       renderAll();
+    }
+
+    $("refreshDash").addEventListener("click", () => {
+      if (window.isDemoMode) {
+        startDummyData();
+      } else {
+        loadFromStorage();
+        renderAll();
+      }
       toast("Dashboard refreshed");
     });
 
-    const dataToggle = $("dataToggle");
     if (dataToggle) {
       dataToggle.addEventListener("change", (e) => {
         if (e.target.checked) {
           $("dummyDataSection").style.display = "block";
           $("realDataSection").style.display = "none";
+          startDummyData();
           toast("Showing dummy data");
         } else {
           $("dummyDataSection").style.display = "none";
           $("realDataSection").style.display = "block";
+          stopDummyData();
+          loadFromStorage();
+          renderAll();
           toast("Showing real Grafana data");
         }
       });
@@ -90,13 +106,69 @@
 
   /* ── Storage helpers ──────────────────────────────────────── */
   function loadFromStorage() {
+    if (window.isDemoMode) return;
     qoeHistory = safeJson(LS_QOE_HISTORY) || [];
     cdnHistory = safeJson(LS_CDN_HISTORY) || [];
-    window.isDemoMode = false;
     
     // If local storage is empty, try to fetch global aggregated data from Grafana
     if (qoeHistory.length === 0) {
       fetchGlobalMetrics();
+    }
+  }
+
+  function generateDummyPoint(ts) {
+    return {
+      qoe: {
+        ts,
+        startup_time_seconds: 1 + Math.random() * 2.5,
+        avg_bitrate_kbps: 2000 + Math.random() * 3000,
+        rebuffer_ratio: Math.random() * 0.04,
+        error_rate: Math.random() > 0.9 ? 0.01 : 0,
+        avg_bandwidth_kbps: 4000 + Math.random() * 5000,
+        dropped_frames: Math.floor(Math.random() * 10),
+        labels: {
+          device_type: ["Mobile", "Desktop", "TV"][Math.floor(Math.random() * 3)],
+          network_type: ["WiFi", "4G", "5G"][Math.floor(Math.random() * 3)]
+        }
+      },
+      cdn: {
+        ts,
+        cacheHitRatio: 0.65 + Math.random() * 0.3,
+        requests: Math.floor(100 + Math.random() * 500),
+        errorRate: Math.random() * 0.03,
+        bytes: Math.floor(5e6 + Math.random() * 20e6)
+      }
+    };
+  }
+
+  function startDummyData() {
+    window.isDemoMode = true;
+    qoeHistory = [];
+    cdnHistory = [];
+    const now = Date.now();
+    for(let i=19; i>=0; i--) {
+      const pt = generateDummyPoint(now - i * 5000);
+      qoeHistory.push(pt.qoe);
+      cdnHistory.push(pt.cdn);
+    }
+    renderAll();
+    
+    if (dummyInterval) clearInterval(dummyInterval);
+    dummyInterval = setInterval(() => {
+      const pt = generateDummyPoint(Date.now());
+      qoeHistory.shift();
+      cdnHistory.shift();
+      qoeHistory.push(pt.qoe);
+      cdnHistory.push(pt.cdn);
+      renderAll();
+    }, 5000);
+  }
+
+  function stopDummyData() {
+    window.isDemoMode = false;
+    if (dummyInterval) {
+      clearInterval(dummyInterval);
+      dummyInterval = null;
     }
   }
 
@@ -582,6 +654,7 @@
   function startPolling() {
     // Poll window.OTT_OBS for live session metrics every 5 s
     setInterval(async () => {
+      if (window.isDemoMode) return;
       const obs = window.OTT_OBS;
       if (obs && typeof obs.flush === "function") {
         // grab the current in-memory metrics snapshot
