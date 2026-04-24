@@ -11,6 +11,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Secrets and Sensitive Data
+secrets.js
+config.json
+keys.json
+Grafana-cloud-data.md
+
 # OS specific files
 .DS_Store
 Thumbs.db
