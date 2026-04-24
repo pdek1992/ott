@@ -19,9 +19,8 @@
   const PASSPHRASE = "VIGIL_SIDDHI_PROD_2026";
   const CONFIG_URL = "keys/observability.json";
 
-  // If you deploy the Cloudflare Worker CORS proxy, put its URL here:
-  // e.g. "https://metrics-proxy.your-subdomain.workers.dev"
-  const CORS_PROXY_URL = ""; 
+  // This relative path will be handled by a Cloudflare Worker route to bypass CORS
+  const CORS_PROXY_URL = "/metrics-proxy"; 
 
   let CFG = {};
   let PROM_URL = "";
