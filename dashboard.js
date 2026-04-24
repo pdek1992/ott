@@ -65,6 +65,21 @@
       renderAll();
       toast("Dashboard refreshed");
     });
+
+    const dataToggle = $("dataToggle");
+    if (dataToggle) {
+      dataToggle.addEventListener("change", (e) => {
+        if (e.target.checked) {
+          $("dummyDataSection").style.display = "block";
+          $("realDataSection").style.display = "none";
+          toast("Showing dummy data");
+        } else {
+          $("dummyDataSection").style.display = "none";
+          $("realDataSection").style.display = "block";
+          toast("Showing real Grafana data");
+        }
+      });
+    }
   });
 
   /* ── Grafana link ─────────────────────────────────────────── */

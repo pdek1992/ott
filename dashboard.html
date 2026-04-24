@@ -19,6 +19,11 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
   <script defer src="./observability_config.js"></script>
   <script defer src="./dashboard.js"></script>
+  <style>
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #27d7ff; }
+    input:checked + .slider:before { transform: translateX(20px); }
+  </style>
 </head>
 <body class="dash-body">
 
@@ -44,6 +49,13 @@
       <span class="pulse-dot"></span>
       <span id="liveStatus">Connecting…</span>
     </div>
+    <div class="toggle-container" style="display:flex; align-items:center; margin-left:15px; margin-right:15px;">
+      <label for="dataToggle" style="font-size:0.85rem; color:var(--muted); font-weight:600;">Dummy Data</label>
+      <label class="switch" style="position:relative; display:inline-block; width:40px; height:20px; margin-left:8px;">
+        <input type="checkbox" id="dataToggle" checked style="opacity:0; width:0; height:0;">
+        <span class="slider round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(157,177,195,0.3); transition:.4s; border-radius:20px;"></span>
+      </label>
+    </div>
     <button id="refreshDash" class="icon-btn" type="button" title="Refresh metrics" aria-label="Refresh metrics">
       <i data-lucide="refresh-cw" aria-hidden="true"></i>
     </button>
@@ -58,6 +70,7 @@
   <!-- ── Dashboard grid ────────────────────────── -->
   <main class="dash-main" id="dashMain">
 
+    <div id="dummyDataSection">
     <!-- ══ SECTION: QoE Overview ═══════════════ -->
     <section class="dash-section" aria-labelledby="qoeHeading">
       <h2 class="section-heading" id="qoeHeading">
@@ -269,6 +282,22 @@
             <tr><td colspan="4" class="table-empty">Waiting for first metric push…</td></tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    </div> <!-- end dummyDataSection -->
+
+    <!-- ══ SECTION: Real Data (Grafana Iframes) ════ -->
+    <section class="dash-section" id="realDataSection" style="display:none;" aria-labelledby="realDataHeading">
+      <h2 class="section-heading" id="realDataHeading">
+        <i data-lucide="server" aria-hidden="true"></i>
+        Real Data (Grafana Cloud)
+      </h2>
+      <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin-bottom: 30px;">
+        <iframe src="https://vigilsiddhi.grafana.net/d-solo/vigil-ott-obs-v1/vigilsiddhi-ott-observability?orgId=1&from=1777017767217&to=1777039367217&timezone=browser&var-region=&refresh=30s&panelId=panel-31" width="450" height="200" frameborder="0"></iframe>
+        <iframe src="https://vigilsiddhi.grafana.net/d-solo/vigil-ott-obs-v1/vigilsiddhi-ott-observability?orgId=1&from=1777017767217&to=1777039367217&timezone=browser&var-region=&refresh=30s&panelId=panel-30" width="450" height="200" frameborder="0"></iframe>
+        <iframe src="https://vigilsiddhi.grafana.net/d-solo/vigil-ott-obs-v1/vigilsiddhi-ott-observability?orgId=1&from=1777017797263&to=1777039397263&timezone=browser&var-region=&refresh=30s&panelId=panel-21" width="450" height="200" frameborder="0"></iframe>
+        <iframe src="https://vigilsiddhi.grafana.net/d-solo/vigil-ott-obs-v1/vigilsiddhi-ott-observability?orgId=1&from=1777017797263&to=1777039397263&timezone=browser&var-region=&refresh=30s&panelId=panel-24" width="450" height="200" frameborder="0"></iframe>
       </div>
     </section>
 
