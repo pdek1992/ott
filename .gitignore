@@ -16,6 +16,9 @@ secrets.js
 config.json
 keys.json
 Grafana-cloud-data.md
+plaintext_keys/
+web-ott/keys/
+readme_codeflow.md
 
 # OS specific files
 .DS_Store

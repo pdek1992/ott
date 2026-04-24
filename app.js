@@ -1441,4 +1441,7 @@
       state.manifestBlobUrl = "";
     }
   }
+
+  // Expose decryption globally for other modules (observability)
+  window.maybeDecryptJson = maybeDecryptJson;
 })();

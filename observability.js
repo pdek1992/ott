@@ -15,16 +15,44 @@
 (() => {
   "use strict";
 
-  /* ── config ────────────────────────────────────────────────── */
-  const CFG = window.OTT_OBSERVABILITY || {};
-  const PROM_URL    = CFG.prometheusUrl    || "";
-  const PROM_USER   = CFG.prometheusUser   || "";
-  const PROM_API_KEY= CFG.prometheusApiKey || "";
-  const PUSH_MS     = CFG.pushIntervalMs   || 30_000;
-  const REGION      = CFG.region           || "IN";
+  /* ── production config (encrypted) ───────────────────────── */
+  const PASSPHRASE = "VIGIL_SIDDHI_PROD_2026";
+  const CONFIG_URL = "keys/observability.json";
 
-  if (!PROM_URL || PROM_USER === "REPLACE_ME_GRAFANA_PROM_USER") {
-    console.info("[OBS] observability_config.js credentials not set – metrics disabled.");
+  // If you deploy the Cloudflare Worker CORS proxy, put its URL here:
+  // e.g. "https://metrics-proxy.your-subdomain.workers.dev"
+  const CORS_PROXY_URL = ""; 
+
+  let CFG = {};
+  let PROM_URL = "";
+  let PROM_USER = "";
+  let PROM_API_KEY = "";
+  let PUSH_MS = 30_000;
+  let REGION = "IN";
+
+  async function initConfig() {
+    try {
+      const response = await fetch(CONFIG_URL + "?_=" + Date.now());
+      if (!response.ok) throw new Error("Failed to fetch observability config");
+      const blob = await response.json();
+      
+      // Use the window.maybeDecryptJson if available, or local fallback
+      const decrypt = (window.maybeDecryptJson) || (async (b) => {
+         // Minimal internal decrypt if app.js isn't ready
+         return b; // Fallback to raw if not encrypted (debugging)
+      });
+
+      CFG = await decrypt(blob);
+      if (CFG) {
+        PROM_URL     = CORS_PROXY_URL || CFG.prometheusUrl || "";
+        PROM_USER    = CFG.prometheusUser || "";
+        PROM_API_KEY = CFG.prometheusApiKey || "";
+        REGION       = CFG.region || "IN";
+        console.info("[OBS] Secure configuration loaded.");
+      }
+    } catch (err) {
+      console.warn("[OBS] Could not load secure config. Remote metrics may be disabled.", err);
+    }
   }
 
   /* ── helpers ───────────────────────────────────────────────── */
@@ -201,8 +229,9 @@
   const obs = {
 
     /** Call when user clicks Play. */
-    onPlayIntent() {
-      if (session) obs.onVideoEnd(); // flush previous
+    async onPlayIntent() {
+      if (session) await obs.onVideoEnd(); // flush previous
+      await initConfig(); // Load secure credentials
       session = newSession();
       session.playClickTime = Date.now();
       schedulePush();

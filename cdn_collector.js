@@ -23,28 +23,57 @@
 
 const https = require("https");
 const http  = require("http");
+const fs    = require("fs");
+const path  = require("path");
+const crypto= require("crypto");
 
-/* ── credentials loading ─────────────────── */
-const CF_ACCOUNT_ID    = process.env.CF_ACCOUNT_ID;
-const CF_ZONE_ID       = process.env.CF_ZONE_ID;
-const CF_API_TOKEN     = process.env.CF_API_TOKEN;
-const PROM_URL         = process.env.GRAFANA_PROM_URL || "https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push";
-const PROM_USER        = process.env.GRAFANA_PROM_USER;
-const PROM_API_KEY     = process.env.GRAFANA_PROM_API_KEY;
+/* ── decryption helper ───────────────────── */
+const PASSPHRASE = "VIGIL_SIDDHI_PROD_2026";
 
-// Check for missing required secrets
-const missing = [];
-if (!CF_ACCOUNT_ID || CF_ACCOUNT_ID === "REPLACE_ME") missing.push("CF_ACCOUNT_ID");
-if (!CF_ZONE_ID || CF_ZONE_ID === "REPLACE_ME") missing.push("CF_ZONE_ID");
-if (!CF_API_TOKEN || CF_API_TOKEN === "REPLACE_ME") missing.push("CF_API_TOKEN");
-if (!PROM_USER || PROM_USER === "REPLACE_ME") missing.push("GRAFANA_PROM_USER");
-if (!PROM_API_KEY || PROM_API_KEY === "REPLACE_ME") missing.push("GRAFANA_PROM_API_KEY");
+function decryptData(blob, phrase) {
+  try {
+    const key = crypto.createHash("sha256").update(phrase).digest();
+    const iv = Buffer.from(blob.iv.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+    const fullCipher = Buffer.from(blob.ciphertext.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+    
+    // Tag is last 16 bytes in our Python/Node output format
+    const ciphertext = fullCipher.subarray(0, fullCipher.length - 16);
+    const tag = fullCipher.subarray(fullCipher.length - 16);
+    
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+    decipher.setAuthTag(tag);
+    
+    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    return JSON.parse(decrypted.toString("utf8"));
+  } catch (err) {
+    throw new Error("Decryption failed. Check passphrase and blob format.");
+  }
+}
 
-if (missing.length > 0) {
-  console.error(`[CDN] ERROR: Missing credentials in environment: ${missing.join(", ")}`);
-  console.error(`[CDN] TIP: Ensure start_metrics.bat or your terminal session has these variables set.`);
+function loadEncryptedConfig() {
+  const configPath = path.join(__dirname, "keys", "observability.json");
+  if (!fs.existsSync(configPath)) {
+    throw new Error(`Missing encrypted config at: ${configPath}`);
+  }
+  const blob = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  return decryptData(blob, PASSPHRASE);
+}
+
+// Global credentials loaded from encrypted file
+let SECRETS = {};
+try {
+  SECRETS = loadEncryptedConfig();
+} catch (err) {
+  console.error(`[CDN] FATAL: Could not load configuration: ${err.message}`);
   process.exit(1);
 }
+
+const CF_ACCOUNT_ID    = SECRETS.cfAccountId;
+const CF_ZONE_ID       = SECRETS.cfZoneId;
+const CF_API_TOKEN     = SECRETS.cfApiToken;
+const PROM_URL         = SECRETS.prometheusUrl || "https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push";
+const PROM_USER        = SECRETS.prometheusUser;
+const PROM_API_KEY     = SECRETS.prometheusApiKey;
 
 /* ── Cloudflare GraphQL API ──────────────────────────────────── */
 const CF_GRAPHQL_URL = "https://api.cloudflare.com/client/v4/graphql";

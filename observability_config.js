@@ -62,23 +62,23 @@ window.OTT_OBSERVABILITY = {
 
   /**
    * Grafana Cloud API key with MetricsPublisher role.
-   * REPLACE with your actual API key.
+   * Pulls from local-only secrets.js
    */
-  prometheusApiKey: (window.OTT_SECRETS && window.OTT_SECRETS.prometheusApiKey) || "REPLACE_ME",
+  prometheusApiKey: (window.OTT_SECRETS && window.OTT_SECRETS.prometheusApiKey) || "",
 
   /** Grafana Cloud dashboard base URL. */
   grafanaBaseUrl: "https://vigilsiddhi.grafana.net",
 
   // ── Cloudflare CDN (used by cdn_collector.js / run_metrics.js) ──
 
-  /** Cloudflare Account ID.  REPLACE with actual value. */
+  /** Cloudflare Account ID. */
   cfAccountId: "e63579be88693f2808e148ec66d99bb4",
 
-  /** Cloudflare Zone ID.  REPLACE with actual value. */
+  /** Cloudflare Zone ID. */
   cfZoneId: "2050063a1247fd46857e5c7c28f7f756",
 
-  /** Cloudflare API token (Analytics:Read).  REPLACE with actual value. */
-  cfApiToken: (window.OTT_SECRETS && window.OTT_SECRETS.cfApiToken) || "REPLACE_ME",
+  /** Cloudflare API token (Analytics:Read). Pulls from local secrets.js */
+  cfApiToken: (window.OTT_SECRETS && window.OTT_SECRETS.cfApiToken) || "",
 
   // ── Metric push settings ────────────────────────────────────
 
