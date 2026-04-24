@@ -42,3 +42,4 @@ gradle/
 gradlew
 gradlew.bat
 AndroidApp/
+secrets.js
