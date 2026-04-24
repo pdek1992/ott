@@ -98,7 +98,6 @@ function buildQuery(zoneId, fromDate, toDate) {
                 cachedBytes
                 threats
                 pageViews
-                uniques
                 responseStatusMap {
                   edgeResponseStatus
                   requests
@@ -173,7 +172,7 @@ async function fetchCfMetrics() {
   const cachedBytes    = sum.cachedBytes    || 0;
   const threats        = sum.threats        || 0;
   const pageViews      = sum.pageViews      || 0;
-  const uniques        = sum.uniques        || 0;
+  // uniques field removed due to CF API plan restrictions
 
   // Count 4xx and 5xx from the status map
   let errors4xx = 0;
@@ -195,7 +194,6 @@ async function fetchCfMetrics() {
     cachedBytes,
     threats,
     pageViews,
-    uniques,
     errors4xx,
     errors5xx,
     cacheHitRatio,
@@ -226,8 +224,7 @@ async function pushToGrafana(metrics) {
     `cdn_errors_4xx,zone=${zone} count=${metrics.errors4xx}u ${tsNs}`,
     `cdn_errors_5xx,zone=${zone} count=${metrics.errors5xx}u ${tsNs}`,
     `cdn_threats,zone=${zone} count=${metrics.threats}u ${tsNs}`,
-    `cdn_pageviews,zone=${zone} count=${metrics.pageViews}u ${tsNs}`,
-    `cdn_uniques,zone=${zone} count=${metrics.uniques}u ${tsNs}`
+    `cdn_pageviews,zone=${zone} count=${metrics.pageViews}u ${tsNs}`
   ].join("\n");
 
   const basicAuth = Buffer.from(`${PROM_USER}:${PROM_API_KEY}`).toString("base64");

@@ -188,13 +188,21 @@
       fetchFirstJson([config.allowedUserIdsUrl, config.localAllowedUserIdsUrl])
     ]);
 
+    const rawEmails = emailsResult.status === "fulfilled" ? emailsResult.value : {};
+    const rawUserIds = userIdsResult.status === "fulfilled" ? userIdsResult.value : {};
+
+    const [emailsData, userIdsData] = await Promise.all([
+      maybeDecryptJson(rawEmails),
+      maybeDecryptJson(rawUserIds)
+    ]);
+
     const allowedEmails = mergeUnique([
-      ...normalizeList(emailsResult.value, ["allowed_emails", "emails", "users"]),
+      ...normalizeList(emailsData, ["allowed_emails", "emails", "users"]),
       ...(config.allowedEmails || [])
     ]).map(normalizeEmail);
 
     const allowedUserIds = mergeUnique([
-      ...normalizeList(userIdsResult.value, ["allowed_userids", "allowed_user_ids", "userids", "users"]),
+      ...normalizeList(userIdsData, ["allowed_userids", "allowed_user_ids", "userids", "users"]),
       ...(config.allowedUserIds || [])
     ]).map(normalizeUserId);
 
@@ -239,16 +247,15 @@
       fetchFirstJson([config.mpdMappingUrl, config.localMpdMappingUrl])
     ]);
 
-    const descriptions = descriptionsResult.status === "fulfilled" && descriptionsResult.value
-      ? descriptionsResult.value
-      : {};
-    const mergedMapping = mappingsResult.status === "fulfilled" && mappingsResult.value
-      ? mappingsResult.value
-      : {};
+    const descriptions = descriptionsResult.status === "fulfilled" ? descriptionsResult.value : {};
+    const mergedMapping = mappingsResult.status === "fulfilled" ? mappingsResult.value : {};
 
+    console.log("[DEBUG] Decrypted mapping keys:", Object.keys(mergedMapping || {}));
     const byId = new Map();
     for (const item of config.staticVideos || []) {
-      byId.set(item.id, normalizeVideo(item, descriptions[item.id], mergedMapping[item.id]));
+      const mapped = mergedMapping[item.id];
+      if (item.id === "tears_of_steel") console.log("[DEBUG] TOS Mapping Result:", mapped);
+      byId.set(item.id, normalizeVideo(item, descriptions[item.id], mapped));
     }
 
     for (const [id, description] of Object.entries(descriptions)) {

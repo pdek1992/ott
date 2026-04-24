@@ -204,6 +204,12 @@
       }
     } catch (err) {
       console.warn("[OBS] Push error:", err);
+      // Local testing fallback: if push fails (e.g. localhost proxy missing), log summary
+      if (metrics.eventType === "summary") {
+        console.group("%c[OBS] Local Session Summary (Push Failed)", "color: #00d2ff; font-weight: bold;");
+        console.table(metrics);
+        console.groupEnd();
+      }
     }
 
     // ── Persist to localStorage so dashboard.js can display history ──
