@@ -482,13 +482,61 @@
         return res.ok ? await res.json() : null;
       }));
 
-      // Map Prometheus range results back into our history format if available
-      // For now, we'll just log and potentially populate the history
-      console.log("[DASH] Global metrics fetched:", results);
-      
+      // Map Prometheus range results back into our history format
       if (results.some(r => r && r.data && r.data.result.length)) {
-        toast("Global metrics loaded from Grafana");
-        // Logic to merge into qoeHistory would go here
+        const history = [];
+        const startupRes = results[0]?.data?.result[0]?.values || [];
+        const bitrateRes = results[1]?.data?.result[0]?.values || [];
+        const rebufRes   = results[2]?.data?.result[0]?.values || [];
+
+        // Use timestamps from the first available result as a base
+        const baseValues = startupRes.length ? startupRes : bitrateRes;
+        
+        baseValues.forEach((val, idx) => {
+          history.push({
+            ts: val[0] * 1000,
+            startup_time_seconds: parseFloat(val[1]),
+            avg_bitrate_kbps: parseFloat(bitrateRes[idx] ? bitrateRes[idx][1] : 0),
+            rebuffer_ratio: parseFloat(rebufRes[idx] ? rebufRes[idx][1] : 0),
+            labels: { region: "Global", device_type: "All", network_type: "All" }
+          });
+        });
+
+        if (history.length > 0) {
+          qoeHistory = history;
+          renderAll();
+          toast("Global QoE loaded from Grafana");
+        }
+      // Also fetch CDN metrics
+      const cdnMetrics = ["cdn_cache_hit_ratio", "cdn_requests_total", "cdn_error_rate"];
+      const cdnResults = await Promise.all(cdnMetrics.map(async m => {
+        const url = `${proxyUrl}?query=${m}&start=${start}&end=${now}&step=60`;
+        const res = await fetch(url, {
+          headers: { "Authorization": `Basic ${basicAuth}` }
+        });
+        return res.ok ? await res.json() : null;
+      }));
+
+      if (cdnResults.some(r => r && r.data && r.data.result.length)) {
+        const history = [];
+        const cacheRes = cdnResults[0]?.data?.result[0]?.values || [];
+        const reqRes   = cdnResults[1]?.data?.result[0]?.values || [];
+        const errRes   = cdnResults[2]?.data?.result[0]?.values || [];
+
+        cacheRes.forEach((val, idx) => {
+          history.push({
+            ts: val[0] * 1000,
+            cacheHitRatio: parseFloat(val[1]),
+            requests: parseInt(reqRes[idx] ? reqRes[idx][1] : 0),
+            errorRate: parseFloat(errRes[idx] ? errRes[idx][1] : 0),
+            bytes: 0 // Aggregate bytes not fetched for simplicity
+          });
+        });
+
+        if (history.length > 0) {
+          cdnHistory = history;
+          renderCDN();
+        }
       }
     } catch (e) {
       console.error("[DASH] Global fetch failed", e);

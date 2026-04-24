@@ -223,7 +223,13 @@
         const body = await response.text().catch(() => "");
         console.warn("[OBS] Push failed:", response.status, body.slice(0, 200));
       } else {
-        console.info("[OBS] Metrics pushed successfully.");
+        console.info(`[OBS] ${metrics.sessions || 1} session metrics pushed successfully.`);
+        console.table({
+          startup: metrics.startup_time_seconds.toFixed(2) + "s",
+          bitrate: (metrics.avg_bitrate_kbps / 1000).toFixed(1) + " Mbps",
+          rebuffer: (metrics.rebuffer_ratio * 100).toFixed(2) + "%",
+          errors: metrics.error_rate
+        });
       }
     } catch (err) {
       console.warn("[OBS] Push error:", err);
