@@ -4,5 +4,10 @@
   "output_02_04": "https://ott.prashantkadam.in/output_02_04/manifest.mpd",
   "output_2min": "https://ott.prashantkadam.in/output_2min/manifest.mpd",
   "tmkoc": "https://ott.prashantkadam.in/tmkoc/manifest.mpd",
-  "withlogo": "https://ott.prashantkadam.in/withlogo/manifest.mpd"
+  "withlogo": "https://ott.prashantkadam.in/withlogo/manifest.mpd",
+  "dash_if_livesim": "https://livesim.dashif.org/livesim/chunkdur_1/ato_7/testpic4_8s/Manifest.mpd",
+  "qualcomm_multirate": "https://dash.akamaized.net/dash264/TestCases/1b/qualcomm/1/MultiRatePatched.mpd",
+  "qualcomm_hd": "https://dash.akamaized.net/dash264/TestCasesHD/2b/qualcomm/1/MultiResMPEG2.mpd",
+  "bitmovin_sample": "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd",
+  "bbb_itec": "http://ftp.itec.aau.at/datasets/DASHDataset2014/BigBuckBunny/2sec/BigBuckBunny_2s_onDemand_2014_05_09.mpd"
 }

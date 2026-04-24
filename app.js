@@ -785,7 +785,7 @@
   }
 
   async function deriveAesGcmKey(passphrase) {
-    const source = new TextEncoder().encode(passphrase || "VIGIL_SIDDHI_PROD_2026");
+    const source = new TextEncoder().encode(passphrase || (window.OTT_SECRETS && window.OTT_SECRETS.fixedKeyPassphrase) || "DEMO");
     const digest = await crypto.subtle.digest("SHA-256", source);
     return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["decrypt"]);
   }

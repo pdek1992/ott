@@ -26,8 +26,8 @@ window.OTT_CONFIG = {
   logoUrl: "./assets/logo.png",
   thumbnailFileNames: ["thumbnail.webp", "thumbnail.jpg", "thumbnail.jpeg", "thumbnail.png"],
 
-  // Production encryption passphrase used for keys.json wrapper.
-  fixedKeyPassphrase: "VIGIL_SIDDHI_PROD_2026",
+  // Master passphrase (loaded from secrets.js)
+  fixedKeyPassphrase: (window.OTT_SECRETS && window.OTT_SECRETS.fixedKeyPassphrase) || "REPLACE_ME",
 
   // Advertising configuration
   googleImaAdTag: "",
@@ -192,34 +192,54 @@ window.OTT_CONFIG = {
     },
     // ── DASH Demo ────────────────────────────────────────────────
     {
+      id: "dash_if_livesim",
+      title: "DASH-IF LiveSim",
+      description: "Industry-standard reference live stream with high-frequency chunking. Perfect for low-latency player verification.",
+      category: "Reference Streams",
+      year: "2024",
+      duration: "LIVE",
+      maturity: "U",
+      thumbnail: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=640&q=80"
+    },
+    {
       id: "multirate_dash",
-      title: "Multi-Rate ABR Baseline",
-      description: "Industry-standard multi-bitrate reference stream demonstrating seamless adaptive bitrate switching.",
+      title: "Qualcomm MultiRate",
+      description: "Official Qualcomm multi-rate patched reference stream for verifying ABR logic and seamless bitrate transitions.",
       category: "Reference Streams",
       year: "2023",
-      duration: "Loop",
+      duration: "ABR",
       maturity: "U",
       thumbnail: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=640&q=80"
     },
     {
       id: "hd_multireso",
-      title: "HD Reference Standard",
-      description: "High-definition multi-resolution reference stream for verifying ABR performance and player stability.",
+      title: "Qualcomm HD Reference",
+      description: "High-definition multi-resolution reference content for testing multi-view and high-resolution player stability.",
       category: "Reference Streams",
       year: "2023",
-      duration: "Loop",
+      duration: "HD",
       maturity: "U",
       thumbnail: "https://images.unsplash.com/photo-1536240478700-b869ad10e128?w=640&q=80"
     },
     {
       id: "bitmovin_demo",
       title: "Bitmovin Gold Standard",
-      description: "Bitmovin reference stream — the global industry benchmark for high-performance adaptive video delivery.",
+      description: "The global benchmark for premium adaptive video delivery — ensuring high-fidelity playback across all network conditions.",
       category: "Reference Streams",
       year: "2023",
       duration: "Feature",
       maturity: "U",
       thumbnail: "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=640&q=80"
+    },
+    {
+      id: "bbb_itec",
+      title: "Big Buck Bunny (ITEC)",
+      description: "Academic standard ITEC dataset for advanced adaptive bitrate streaming experiments and data-layer analysis.",
+      category: "Animation",
+      year: "2014",
+      duration: "10m",
+      maturity: "U",
+      thumbnail: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=640&q=80"
     }
   ],
 
@@ -251,7 +271,7 @@ window.OTT_CONFIG = {
     },
     {
       title: "📡 Reference Streams",
-      items: ["multirate_dash", "hd_multireso", "bitmovin_demo"]
+      items: ["dash_if_livesim", "multirate_dash", "hd_multireso", "bitmovin_demo", "bbb_itec"]
     },
     {
       title: "▶️ Your Content",

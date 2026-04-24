@@ -24,13 +24,27 @@
 const https = require("https");
 const http  = require("http");
 
-/* ── credentials from environment variables ─────────────────── */
-const CF_ACCOUNT_ID    = process.env.CF_ACCOUNT_ID    || "REPLACE_ME";
-const CF_ZONE_ID       = process.env.CF_ZONE_ID       || "REPLACE_ME";
-const CF_API_TOKEN     = process.env.CF_API_TOKEN     || "REPLACE_ME";
+/* ── credentials loading ─────────────────── */
+const CF_ACCOUNT_ID    = process.env.CF_ACCOUNT_ID;
+const CF_ZONE_ID       = process.env.CF_ZONE_ID;
+const CF_API_TOKEN     = process.env.CF_API_TOKEN;
 const PROM_URL         = process.env.GRAFANA_PROM_URL || "https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push";
-const PROM_USER        = process.env.GRAFANA_PROM_USER    || "REPLACE_ME";
-const PROM_API_KEY     = process.env.GRAFANA_PROM_API_KEY || "REPLACE_ME";
+const PROM_USER        = process.env.GRAFANA_PROM_USER;
+const PROM_API_KEY     = process.env.GRAFANA_PROM_API_KEY;
+
+// Check for missing required secrets
+const missing = [];
+if (!CF_ACCOUNT_ID || CF_ACCOUNT_ID === "REPLACE_ME") missing.push("CF_ACCOUNT_ID");
+if (!CF_ZONE_ID || CF_ZONE_ID === "REPLACE_ME") missing.push("CF_ZONE_ID");
+if (!CF_API_TOKEN || CF_API_TOKEN === "REPLACE_ME") missing.push("CF_API_TOKEN");
+if (!PROM_USER || PROM_USER === "REPLACE_ME") missing.push("GRAFANA_PROM_USER");
+if (!PROM_API_KEY || PROM_API_KEY === "REPLACE_ME") missing.push("GRAFANA_PROM_API_KEY");
+
+if (missing.length > 0) {
+  console.error(`[CDN] ERROR: Missing credentials in environment: ${missing.join(", ")}`);
+  console.error(`[CDN] TIP: Ensure start_metrics.bat or your terminal session has these variables set.`);
+  process.exit(1);
+}
 
 /* ── Cloudflare GraphQL API ──────────────────────────────────── */
 const CF_GRAPHQL_URL = "https://api.cloudflare.com/client/v4/graphql";
@@ -53,6 +67,9 @@ function buildQuery(zoneId, fromDate, toDate) {
                 cachedRequests
                 bytes
                 cachedBytes
+                threats
+                pageViews
+                uniques
                 responseStatusMap {
                   edgeResponseStatus
                   requests
@@ -125,6 +142,9 @@ async function fetchCfMetrics() {
   const cachedRequests = sum.cachedRequests || 0;
   const bytes          = sum.bytes          || 0;
   const cachedBytes    = sum.cachedBytes    || 0;
+  const threats        = sum.threats        || 0;
+  const pageViews      = sum.pageViews      || 0;
+  const uniques        = sum.uniques        || 0;
 
   // Count 4xx and 5xx from the status map
   let errors4xx = 0;
@@ -144,6 +164,9 @@ async function fetchCfMetrics() {
     cachedRequests,
     bytes,
     cachedBytes,
+    threats,
+    pageViews,
+    uniques,
     errors4xx,
     errors5xx,
     cacheHitRatio,
@@ -172,7 +195,10 @@ async function pushToGrafana(metrics) {
     `cdn_bandwidth_saved_ratio,zone=${zone} value=${metrics.bandwidthSavedRatio.toFixed(4)} ${tsNs}`,
     `cdn_error_rate,zone=${zone} value=${metrics.errorRate.toFixed(6)} ${tsNs}`,
     `cdn_errors_4xx,zone=${zone} count=${metrics.errors4xx}u ${tsNs}`,
-    `cdn_errors_5xx,zone=${zone} count=${metrics.errors5xx}u ${tsNs}`
+    `cdn_errors_5xx,zone=${zone} count=${metrics.errors5xx}u ${tsNs}`,
+    `cdn_threats,zone=${zone} count=${metrics.threats}u ${tsNs}`,
+    `cdn_pageviews,zone=${zone} count=${metrics.pageViews}u ${tsNs}`,
+    `cdn_uniques,zone=${zone} count=${metrics.uniques}u ${tsNs}`
   ].join("\n");
 
   const basicAuth = Buffer.from(`${PROM_USER}:${PROM_API_KEY}`).toString("base64");

@@ -49,5 +49,45 @@
     "category": "Featured",
     "year": "2026",
     "duration": "Preview"
+  },
+  "dash_if_livesim": {
+    "title": "DASH-IF LiveSim",
+    "description": "Reference high-frequency chunked DASH live stream for low-latency testing.",
+    "category": "Reference",
+    "year": "2024",
+    "duration": "LIVE",
+    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=640&q=80"
+  },
+  "qualcomm_multirate": {
+    "title": "Qualcomm MultiRate",
+    "description": "Multi-rate patched reference DASH stream for ABR verification.",
+    "category": "Reference",
+    "year": "2023",
+    "duration": "Feature",
+    "thumbnail": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=640&q=80"
+  },
+  "qualcomm_hd": {
+    "title": "Qualcomm HD",
+    "description": "High-definition multi-resolution reference content.",
+    "category": "Reference",
+    "year": "2023",
+    "duration": "HD",
+    "thumbnail": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=640&q=80"
+  },
+  "bitmovin_sample": {
+    "title": "Bitmovin Gold",
+    "description": "The industry benchmark for premium ABR streaming performance.",
+    "category": "Reference",
+    "year": "2023",
+    "duration": "Reference",
+    "thumbnail": "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=640&q=80"
+  },
+  "bbb_itec": {
+    "title": "Big Buck Bunny (ITEC)",
+    "description": "ITEC high-fidelity dataset for adaptive streaming experiments.",
+    "category": "Animation",
+    "year": "2014",
+    "duration": "10m",
+    "thumbnail": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=640&q=80"
   }
 }
