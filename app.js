@@ -243,8 +243,8 @@
 
   async function loadCatalog() {
     const [descriptionsResult, mappingsResult] = await Promise.allSettled([
-      fetchFirstJson([config.descriptionsUrl, config.localDescriptionsUrl]),
-      fetchFirstJson([config.mpdMappingUrl, config.localMpdMappingUrl])
+      fetchFirstJson([config.localDescriptionsUrl, config.descriptionsUrl]),
+      fetchFirstJson([config.localMpdMappingUrl, config.mpdMappingUrl])
     ]);
 
     const rawDescriptions = descriptionsResult.status === "fulfilled" ? descriptionsResult.value : {};
@@ -769,8 +769,9 @@
       return state.keyStore;
     }
 
-    const raw = await fetchFirstJson([config.keysUrl, config.localKeysUrl]);
-    state.keyStore = normalizeKeyStore(raw);
+    const raw = await fetchFirstJson([config.localKeysUrl, config.keysUrl]);
+    const decryptedKeys = await maybeDecryptJson(raw);
+    state.keyStore = normalizeKeyStore(decryptedKeys);
     return state.keyStore;
   }
 

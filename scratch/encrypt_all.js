@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const PASSPHRASE = "VIGIL_SIDDHI_PROD_2026";
-const SOURCE_DIR = path.join('d:', 'Desktop Folders', 'Android app', 'OTT', 'web-ott', 'keys');
+const SOURCE_DIR = path.join('d:', 'Desktop Folders', 'Android app', 'OTT', 'plaintext_keys');
 const TARGET_DIR = path.join('d:', 'Desktop Folders', 'Android app', 'OTT', 'keys');
 
 const FILES_TO_ENCRYPT = [
@@ -23,7 +23,6 @@ async function encryptData(data, phrase) {
     const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
     const tag = cipher.getAuthTag();
 
-    // Browser-compatible Base64Url
     function toBase64Url(buf) {
         return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
@@ -46,29 +45,9 @@ async function run() {
             continue;
         }
 
-        let content = fs.readFileSync(sourcePath, 'utf8');
-        let data = JSON.parse(content);
+        const content = fs.readFileSync(sourcePath, 'utf8');
 
-        // Special handling for MPD Mapping updates
-        if (fileName === 'mpd_mapping.json') {
-            // Your original production URLs (OTT.prashant...)
-            data["free"] = "https://ott.prashantkadam.in/free/manifest.mpd";
-            data["asiacup"] = "https://ott.prashantkadam.in/asiacup/manifest.mpd";
-            data["output_02_04"] = "https://ott.prashantkadam.in/output_02_04/manifest.mpd";
-            data["output_2min"] = "https://ott.prashantkadam.in/output_2min/manifest.mpd";
-            data["tmkoc"] = "https://ott.prashantkadam.in/tmkoc/manifest.mpd";
-            data["withlogo"] = "https://ott.prashantkadam.in/withlogo/manifest.mpd";
-
-            // Industry standard reference URLs (Direct)
-            data["dash_if_livesim"] = "https://livesim.dashif.org/livesim/chunkdur_1/ato_7/testpic4_8s/Manifest.mpd";
-            data["multirate_dash"] = "https://dash.akamaized.net/dash264/TestCases/1b/qualcomm/1/MultiRatePatched.mpd";
-            data["hd_multireso"] = "https://dash.akamaized.net/dash264/TestCasesHD/2b/qualcomm/1/MultiResMPEG2.mpd";
-            data["bitmovin_demo"] = "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd";
-            data["bbb_itec"] = "http://ftp.itec.aau.at/datasets/DASHDataset2014/BigBuckBunny/2sec/BigBuckBunny_2s_onDemand_2014_05_09.mpd";
-
-            content = JSON.stringify(data, null, 2);
-        }
-
+        // We no longer hardcode replacements. We just encrypt exactly what is in the plaintext_keys file!
         const wrapped = await encryptData(content, PASSPHRASE);
         const targetPath = path.join(TARGET_DIR, fileName);
         fs.writeFileSync(targetPath, JSON.stringify(wrapped, null, 2));
