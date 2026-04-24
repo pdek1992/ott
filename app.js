@@ -247,8 +247,13 @@
       fetchFirstJson([config.mpdMappingUrl, config.localMpdMappingUrl])
     ]);
 
-    const descriptions = descriptionsResult.status === "fulfilled" ? descriptionsResult.value : {};
-    const mergedMapping = mappingsResult.status === "fulfilled" ? mappingsResult.value : {};
+    const rawDescriptions = descriptionsResult.status === "fulfilled" ? descriptionsResult.value : {};
+    const rawMapping = mappingsResult.status === "fulfilled" ? mappingsResult.value : {};
+
+    const [descriptions, mergedMapping] = await Promise.all([
+      maybeDecryptJson(rawDescriptions),
+      maybeDecryptJson(rawMapping)
+    ]);
 
     console.log("[DEBUG] Decrypted mapping keys:", Object.keys(mergedMapping || {}));
     const byId = new Map();
@@ -617,15 +622,21 @@
         return url;
       } catch (error) {
         lastError = error;
+        console.error(`[Player] Failed to load ${url}`, error);
         await state.player.unload().catch(() => undefined);
-        const patchedUrl = await createStaticMpdBlobUrl(url).catch(() => "");
-        if (patchedUrl) {
-          try {
-            await state.player.load(patchedUrl);
-            return url;
-          } catch (patchedError) {
-            lastError = patchedError;
-            await state.player.unload().catch(() => undefined);
+        
+        // Only use the static MPD blob hack for our local dynamic outputs.
+        // Doing this for external URLs (like DASH-IF) breaks all relative segments!
+        if (url.includes(config.cdnBaseUrl || "missing") || url.includes(config.r2BaseUrl || "missing")) {
+          const patchedUrl = await createStaticMpdBlobUrl(url).catch(() => "");
+          if (patchedUrl) {
+             try {
+               await state.player.load(patchedUrl);
+               return url;
+             } catch (patchedError) {
+               lastError = patchedError;
+               await state.player.unload().catch(() => undefined);
+             }
           }
         }
       }
@@ -742,7 +753,9 @@
       return null;
     }
 
-    const key = store[videoId] || Object.values(store)[0];
+    // Do NOT fallback to Object.values(store)[0] because that 
+    // assigns random DRM keys to unencrypted streams!
+    const key = store[videoId];
 
     if (!key || !key.key_id || !key.key) {
       return null;

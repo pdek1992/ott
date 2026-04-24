@@ -243,7 +243,10 @@ async function pushToGrafana(metrics) {
 
   const { status, body } = await httpRequest(options, lines);
   
-  if (status < 200 || status >= 300) {
+  if (status === 429) {
+    console.warn(`[CDN] Grafana rate limit hit (429). Skipping push cycle.`);
+    return;
+  } else if (status < 200 || status >= 300) {
     // If Influx endpoint fails, fall back to helpful error
     throw new Error(`Grafana Influx-push failed ${status}: ${body.slice(0, 200)}`);
   }

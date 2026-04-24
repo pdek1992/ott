@@ -12,7 +12,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Secrets and Sensitive Data
-secrets.js
+#secrets.js
 config.json
 keys.json
 Grafana-cloud-data.md
