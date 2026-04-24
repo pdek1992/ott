@@ -77,63 +77,17 @@
   function loadFromStorage() {
     qoeHistory = safeJson(LS_QOE_HISTORY) || [];
     cdnHistory = safeJson(LS_CDN_HISTORY) || [];
-
-    // Storage containers
-    qoeHistory = safeJson(LS_QOE_HISTORY) || [];
-    cdnHistory = safeJson(LS_CDN_HISTORY) || [];
+    window.isDemoMode = false;
+    
+    // If local storage is empty, try to fetch global aggregated data from Grafana
+    if (qoeHistory.length === 0) {
+      fetchGlobalMetrics();
+    }
   }
 
   function safeJson(key) {
     try { return JSON.parse(localStorage.getItem(key)); }
     catch { return null; }
-  }
-
-  /* ── Demo data seeds (shown until real data arrives) ───────── */
-  function generateDemoQoE(n) {
-    const out = [];
-    for (let i = 0; i < n; i++) {
-      out.push({
-        ts: Date.now() - (n - i) * 30_000,
-        startup_time_seconds: 1.2 + Math.random() * 2.5,
-        rebuffer_ratio:       Math.random() * 0.05,
-        avg_bitrate_kbps:     800 + Math.random() * 2400,
-        error_rate:           Math.random() > 0.9 ? 1 : 0,
-        avg_bandwidth_kbps:   1500 + Math.random() * 3000,
-        dropped_frames:       Math.floor(Math.random() * 6),
-        rebuffer_count:       Math.floor(Math.random() * 3),
-        labels: {
-          region:       "IN",
-          device_type:  ["mobile","desktop","tv"][Math.floor(Math.random()*3)],
-          network_type: ["wifi","4g","5g","unknown"][Math.floor(Math.random()*4)]
-        }
-      });
-    }
-    return out;
-  }
-
-  function generateDemoCDN(n) {
-    const out = [];
-    for (let i = 0; i < n; i++) {
-      const requests = 1000 + Math.floor(Math.random() * 4000);
-      const cached   = Math.floor(requests * (0.65 + Math.random() * 0.3));
-      const bytes    = requests * 1000000;
-      const cachedB  = Math.floor(bytes * (cached / requests));
-      const err4xx   = Math.floor(Math.random() * 5);
-      const err5xx   = Math.floor(Math.random() * 2);
-      out.push({
-        ts: Date.now() - (n - i) * 60_000,
-        requests,
-        cachedRequests:    cached,
-        bytes,
-        cachedBytes:       cachedB,
-        errors4xx:         err4xx,
-        errors5xx:         err5xx,
-        cacheHitRatio:     cached / requests,
-        bandwidthSavedRatio: cachedB / bytes,
-        errorRate:         (err4xx + err5xx) / requests
-      });
-    }
-    return out;
   }
 
   /* ── Chart initialization ─────────────────────────────────── */
@@ -500,16 +454,64 @@
     }
   }
 
+  async function fetchGlobalMetrics() {
+    const queryUrl = CFG.prometheusQueryUrl;
+    const user = CFG.prometheusUser;
+    const key = CFG.prometheusApiKey;
+
+    if (!queryUrl || !user || !key) {
+      console.warn("[DASH] Global metric fetch skipped: credentials missing.");
+      return;
+    }
+
+    // Proxy path to avoid CORS (configured on web server/worker)
+    const proxyUrl = "/query-proxy" || queryUrl;
+
+    try {
+      const basicAuth = btoa(`${user}:${key}`);
+      const now = Math.floor(Date.now() / 1000);
+      const start = now - 3600; // Last hour
+
+      // Fetch 1h trend for a few key metrics (standardized names)
+      const metrics = ["qoe_startup_time_seconds", "qoe_avg_bitrate_kbps", "qoe_rebuffer_ratio"];
+      const results = await Promise.all(metrics.map(async m => {
+        const url = `${proxyUrl}?query=${m}&start=${start}&end=${now}&step=60`;
+        const res = await fetch(url, {
+          headers: { "Authorization": `Basic ${basicAuth}` }
+        });
+        return res.ok ? await res.json() : null;
+      }));
+
+      // Map Prometheus range results back into our history format if available
+      // For now, we'll just log and potentially populate the history
+      console.log("[DASH] Global metrics fetched:", results);
+      
+      if (results.some(r => r && r.data && r.data.result.length)) {
+        toast("Global metrics loaded from Grafana");
+        // Logic to merge into qoeHistory would go here
+      }
+    } catch (e) {
+      console.error("[DASH] Global fetch failed", e);
+    }
+  }
+
   function renderLiveStatus() {
-    const obs = window.OTT_OBS;
     const li  = $("liveIndicator");
     const ls  = $("liveStatus");
-    if (obs && qoeHistory.length) {
+    
+    const latest = qoeHistory.length ? qoeHistory[qoeHistory.length - 1] : null;
+    const isFresh = latest && (Date.now() - latest.ts < 300_000); // 5 mins
+    const hasRealData = (qoeHistory.length > 0);
+
+    if (hasRealData && isFresh) {
       li.classList.remove("offline");
       ls.textContent = "Live";
+    } else if (hasRealData) {
+      li.classList.add("offline");
+      ls.textContent = "Standby";
     } else {
       li.classList.add("offline");
-      ls.textContent = "Demo data";
+      ls.textContent = "No data";
     }
   }
 

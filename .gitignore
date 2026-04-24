@@ -43,4 +43,4 @@ gradlew
 gradlew.bat
 AndroidApp/
 secrets.js
-keys/observability.json
+#keys/observability.json

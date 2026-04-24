@@ -53,10 +53,13 @@ function decryptData(blob, phrase) {
 function loadEncryptedConfig() {
   const configPath = path.join(__dirname, "keys", "observability.json");
   if (!fs.existsSync(configPath)) {
-    throw new Error(`Missing encrypted config at: ${configPath}`);
+    throw new Error(`Missing config at: ${configPath}`);
   }
   const blob = JSON.parse(fs.readFileSync(configPath, "utf8"));
-  return decryptData(blob, PASSPHRASE);
+  if (blob.encrypted) {
+    return decryptData(blob, PASSPHRASE);
+  }
+  return blob;
 }
 
 // Global credentials loaded from encrypted file
@@ -214,9 +217,9 @@ async function pushToGrafana(metrics) {
 
   // Influx Line Protocol: measurement,tag=val field=val timestamp
   const lines = [
-    `cdn_requests,zone=${zone} count=${metrics.requests}u ${tsNs}`,
+    `cdn_requests_total,zone=${zone} count=${metrics.requests}u ${tsNs}`,
     `cdn_cached_requests,zone=${zone} count=${metrics.cachedRequests}u ${tsNs}`,
-    `cdn_bandwidth,zone=${zone} bytes=${metrics.bytes}u ${tsNs}`,
+    `cdn_bandwidth_bytes,zone=${zone} bytes=${metrics.bytes}u ${tsNs}`,
     `cdn_cached_bandwidth,zone=${zone} bytes=${metrics.cachedBytes}u ${tsNs}`,
     `cdn_cache_hit_ratio,zone=${zone} value=${metrics.cacheHitRatio.toFixed(4)} ${tsNs}`,
     `cdn_bandwidth_saved_ratio,zone=${zone} value=${metrics.bandwidthSavedRatio.toFixed(4)} ${tsNs}`,

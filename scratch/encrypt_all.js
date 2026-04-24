@@ -12,8 +12,10 @@ const FILES_TO_ENCRYPT = [
     'allowed_userids.json',
     'description.json',
     'keys.json',
-    'mpd_mapping.json'
+    'mpd_mapping.json',
+    'observability.json'
 ];
+
 
 async function encryptData(data, phrase) {
     const iv = crypto.randomBytes(12);

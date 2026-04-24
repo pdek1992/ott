@@ -7,7 +7,7 @@
  *  - Aggregates locally; never sends raw per-event data
  *  - Pushes every 30 s OR on video end
  *  - Low-cardinality labels only: region, device_type, network_type
- *  - Prometheus remote_write (protobuf-less text format via CORS proxy shim)
+ *  - Uses Influx Line Protocol for robust browser-to-Grafana pushing.
  *
  * Integration: loaded AFTER observability_config.js and shaka-player.
  */
@@ -19,7 +19,7 @@
   const PASSPHRASE = "VIGIL_SIDDHI_PROD_2026";
   const CONFIG_URL = "keys/observability.json";
 
-  // This relative path will be handled by a Cloudflare Worker route to bypass CORS
+  // Relative path handled by proxy if available
   const CORS_PROXY_URL = "/metrics-proxy"; 
 
   let CFG = {};
@@ -35,23 +35,50 @@
       if (!response.ok) throw new Error("Failed to fetch observability config");
       const blob = await response.json();
       
-      // Use the window.maybeDecryptJson if available, or local fallback
-      const decrypt = (window.maybeDecryptJson) || (async (b) => {
-         // Minimal internal decrypt if app.js isn't ready
-         return b; // Fallback to raw if not encrypted (debugging)
-      });
+      // Internal decryption helper to avoid race conditions with app.js
+      const internalDecrypt = async (raw) => {
+        if (!raw || !raw.encrypted) return raw;
+        try {
+          const iv = decodeFlexibleBytes(raw.iv || raw.nonce);
+          const ciphertext = decodeFlexibleBytes(raw.ciphertext || raw.data || raw.payload);
+          const passphrase = PASSPHRASE || (window.OTT_SECRETS && window.OTT_SECRETS.fixedKeyPassphrase) || "VIGIL_SIDDHI_PROD_2026";
+          
+          const source = new TextEncoder().encode(passphrase);
+          const digest = await crypto.subtle.digest("SHA-256", source);
+          const key = await crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["decrypt"]);
+          
+          const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+          const text = new TextDecoder().decode(decrypted);
+          return JSON.parse(text);
+        } catch (err) {
+          console.error("[OBS] Decryption failed:", err);
+          return null;
+        }
+      };
 
-      CFG = await decrypt(blob);
+      CFG = await internalDecrypt(blob);
       if (CFG) {
-        PROM_URL     = CORS_PROXY_URL || CFG.prometheusUrl || "";
+        // Preference: Use direct URL if on localhost, otherwise try proxy
+        const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        PROM_URL     = (isLocal ? "" : CORS_PROXY_URL) || CFG.prometheusUrl || "";
         PROM_USER    = CFG.prometheusUser || "";
         PROM_API_KEY = CFG.prometheusApiKey || "";
         REGION       = CFG.region || "IN";
         console.info("[OBS] Secure configuration loaded.");
       }
     } catch (err) {
-      console.warn("[OBS] Could not load secure config. Remote metrics may be disabled.", err);
+      console.warn("[OBS] Config load failed. Falling back to demo mode.", err);
     }
+  }
+
+  function decodeFlexibleBytes(val) {
+    if (!val) return new Uint8Array(0);
+    if (val instanceof Uint8Array) return val;
+    if (typeof val === "string") {
+      const binary = atob(val.replace(/-/g, "+").replace(/_/g, "/"));
+      return Uint8Array.from(binary, c => c.charCodeAt(0));
+    }
+    return new Uint8Array(0);
   }
 
   /* ── helpers ───────────────────────────────────────────────── */
@@ -67,7 +94,6 @@
     if (!conn) return "unknown";
     const ect = conn.effectiveType || "";
     if (ect === "4g") {
-      // crude 5G check: type === "cellular" and downlink > 20 Mbit/s
       if (conn.downlink && conn.downlink > 20) return "5g";
       return "4g";
     }
@@ -105,8 +131,6 @@
     if (!session) return null;
 
     const now = Date.now();
-
-    // Accumulate running play time
     if (session.playTimeStartMs !== null) {
       session.playTimeTotalMs += now - session.playTimeStartMs;
       session.playTimeStartMs = now;
@@ -141,53 +165,52 @@
     };
   }
 
-  /* ── Prometheus remote_write (text format via fetch) ───────── */
   /**
-   * Grafana Cloud Prometheus accepts the Prometheus HTTP API
-   * compatible remote_write endpoint at /api/prom/push.
-   * We send newline-delimited text (exposition format) using
-   * Basic auth (user = instance_id, password = API key).
-   *
-   * Note: browsers block direct remote_write protobuf pushes from
-   * cross-origin pages.  Grafana Cloud's /api/prom/push endpoint
-   * supports CORS for Bearer/Basic auth when the caller sends
-   * Content-Type: application/x-www-form-urlencoded with a
-   * prometheus-encoded body via the Pushgateway-compatible
-   * text exposition format.  We use the lightweight text push.
+   * pushMetrics
+   * ─────────────────────────────────────────────────────────────
+   * Pushes the QoE record to Grafana Cloud.
+   * 
+   * NOTE: We use Influx Line Protocol because Grafana Cloud's
+   * Influx endpoint handles text POSTs much better from browsers
+   * than the Prometheus remote_write endpoint.
    */
   async function pushMetrics(metrics) {
     if (!PROM_URL || PROM_USER === "REPLACE_ME_GRAFANA_PROM_USER" || !PROM_API_KEY || PROM_API_KEY === "REPLACE_ME_GRAFANA_PROM_API_KEY") {
       console.debug("[OBS] Skipping push – credentials not configured.", metrics);
+      persistQoEHistory(metrics);
       return;
     }
 
-    const { labels } = metrics;
-    const labelStr = `region="${labels.region}",device_type="${labels.device_type}",network_type="${labels.network_type}"`;
-    const ts = Date.now(); // milliseconds epoch
+    const esc = (s) => (s || "").toString().replace(/ /g, "\\ ").replace(/,/g, "\\,");
+    const appTag = esc(CFG.appName || "VigilSiddhi_OTT");
+    const deviceType = esc(metrics.labels.device_type);
+    const networkType = esc(metrics.labels.network_type);
+    const region = esc(metrics.labels.region);
+
+    const labels = `app=${appTag},region=${region},device_type=${deviceType},network_type=${networkType}`;
+    const tsNs = Date.now() * 1000000;
 
     const lines = [
-      `# TYPE qoe_startup_time_seconds gauge`,
-      `qoe_startup_time_seconds{${labelStr}} ${metrics.startup_time_seconds.toFixed(3)} ${ts}`,
-      `# TYPE qoe_rebuffer_ratio gauge`,
-      `qoe_rebuffer_ratio{${labelStr}} ${metrics.rebuffer_ratio.toFixed(4)} ${ts}`,
-      `# TYPE qoe_avg_bitrate_kbps gauge`,
-      `qoe_avg_bitrate_kbps{${labelStr}} ${metrics.avg_bitrate_kbps.toFixed(1)} ${ts}`,
-      `# TYPE qoe_error_rate gauge`,
-      `qoe_error_rate{${labelStr}} ${metrics.error_rate} ${ts}`,
-      `# TYPE qoe_avg_bandwidth_kbps gauge`,
-      `qoe_avg_bandwidth_kbps{${labelStr}} ${metrics.avg_bandwidth_kbps.toFixed(1)} ${ts}`,
-      `# TYPE qoe_dropped_frames counter`,
-      `qoe_dropped_frames{${labelStr}} ${metrics.dropped_frames} ${ts}`,
-      `# TYPE qoe_rebuffer_count counter`,
-      `qoe_rebuffer_count{${labelStr}} ${metrics.rebuffer_count} ${ts}`,
-      `# TYPE qoe_active_sessions gauge`,
-      `qoe_active_sessions{${labelStr}} 1 ${ts}`
+      `qoe_startup_time_seconds,${labels} value=${metrics.startup_time_seconds.toFixed(3)} ${tsNs}`,
+      `qoe_rebuffer_ratio,${labels} value=${metrics.rebuffer_ratio.toFixed(4)} ${tsNs}`,
+      `qoe_avg_bitrate_kbps,${labels} value=${Math.round(metrics.avg_bitrate_kbps)} ${tsNs}`,
+      `qoe_avg_bandwidth_kbps,${labels} value=${Math.round(metrics.avg_bandwidth_kbps)} ${tsNs}`,
+      `qoe_error_rate,${labels} value=${metrics.error_rate} ${tsNs}`,
+      `qoe_dropped_frames,${labels} value=${metrics.dropped_frames} ${tsNs}`,
+      `qoe_rebuffer_count,${labels} value=${metrics.rebuffer_count} ${tsNs}`,
+      `qoe_active_sessions,${labels} value=1 ${tsNs}`
     ].join("\n");
 
     const basicAuth = btoa(`${PROM_USER}:${PROM_API_KEY}`);
 
+    let targetUrl = PROM_URL;
+    if (targetUrl.includes("/api/prom/push")) {
+      targetUrl = targetUrl.replace("prometheus", "influx")
+                           .replace("/api/prom/push", "/api/v1/push/influx/write");
+    }
+
     try {
-      const response = await fetch(PROM_URL, {
+      const response = await fetch(targetUrl, {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
@@ -200,19 +223,12 @@
         const body = await response.text().catch(() => "");
         console.warn("[OBS] Push failed:", response.status, body.slice(0, 200));
       } else {
-        console.debug("[OBS] Metrics pushed OK", metrics);
+        console.info("[OBS] Metrics pushed successfully.");
       }
     } catch (err) {
       console.warn("[OBS] Push error:", err);
-      // Local testing fallback: if push fails (e.g. localhost proxy missing), log summary
-      if (metrics.eventType === "summary") {
-        console.group("%c[OBS] Local Session Summary (Push Failed)", "color: #00d2ff; font-weight: bold;");
-        console.table(metrics);
-        console.groupEnd();
-      }
     }
-
-    // ── Persist to localStorage so dashboard.js can display history ──
+    
     persistQoEHistory(metrics);
   }
 
@@ -225,24 +241,19 @@
       stored.push({ ts: Date.now(), ...metrics });
       if (stored.length > MAX_LS_HISTORY) stored.splice(0, stored.length - MAX_LS_HISTORY);
       localStorage.setItem(LS_QOE_HISTORY, JSON.stringify(stored));
-    } catch (e) {
-      // localStorage may be full or unavailable
-    }
+    } catch (e) { }
   }
 
-  /* ── public API attached to window.OTT_OBS ─────────────────── */
+  /* ── public API ───────────────────────────────────────────── */
   const obs = {
-
-    /** Call when user clicks Play. */
     async onPlayIntent() {
-      if (session) await obs.onVideoEnd(); // flush previous
-      await initConfig(); // Load secure credentials
+      if (session) await obs.onVideoEnd();
+      await initConfig();
       session = newSession();
       session.playClickTime = Date.now();
       schedulePush();
     },
 
-    /** Call when first frame is rendered / canplay fires. */
     onFirstFrame() {
       if (session && !session.firstFrameTime) {
         session.firstFrameTime = Date.now();
@@ -250,14 +261,12 @@
       }
     },
 
-    /** Call when playback begins/resumes. */
     onPlayResume() {
       if (session && session.playTimeStartMs === null) {
         session.playTimeStartMs = Date.now();
       }
     },
 
-    /** Call when playback pauses. */
     onPlayPause() {
       if (session && session.playTimeStartMs !== null) {
         session.playTimeTotalMs += Date.now() - session.playTimeStartMs;
@@ -265,13 +274,11 @@
       }
     },
 
-    /** Call when buffering starts. */
     onBufferingStart() {
       if (!session) return;
       session.bufferingStartTime = Date.now();
     },
 
-    /** Call when buffering ends. */
     onBufferingEnd() {
       if (!session || !session.bufferingStartTime) return;
       const elapsed = Date.now() - session.bufferingStartTime;
@@ -280,47 +287,26 @@
       session.bufferingStartTime = null;
     },
 
-    /**
-     * Call on bitrate adaptation events.
-     * @param {number} bitrateBps
-     */
     onBitrateChange(bitrateBps) {
       if (!session) return;
       session.bitrateSamples.push(bitrateBps);
-      if (session.bitrateSamples.length > 200) {
-        session.bitrateSamples.shift();
-      }
+      if (session.bitrateSamples.length > 200) session.bitrateSamples.shift();
     },
 
-    /**
-     * Call periodically with estimated bandwidth (Shaka provides this).
-     * @param {number} bps
-     */
     onBandwidthEstimate(bps) {
       if (session) session.estimatedBandwidthBps = bps;
     },
 
-    /** Call on any player error. */
     onError() {
       if (session) session.errors += 1;
     },
 
-    /**
-     * Call on video timeupdate to sample dropped frames.
-     * @param {HTMLVideoElement} videoEl
-     */
     onTimeUpdate(videoEl) {
       if (!session || !videoEl) return;
-      const quality = videoEl.getVideoPlaybackQuality
-        ? videoEl.getVideoPlaybackQuality()
-        : null;
-      if (quality) {
-        const total = quality.droppedVideoFrames || 0;
-        session.droppedFrames = total;
-      }
+      const quality = videoEl.getVideoPlaybackQuality ? videoEl.getVideoPlaybackQuality() : null;
+      if (quality) session.droppedFrames = quality.droppedVideoFrames || 0;
     },
 
-    /** Call when video ends or player closes – flushes & resets. */
     async onVideoEnd() {
       clearInterval(pushTimer);
       pushTimer = null;
@@ -331,7 +317,6 @@
       if (metrics) await pushMetrics(metrics);
     },
 
-    /** Force a push now (called by interval). */
     async flush() {
       const metrics = computeMetrics();
       if (metrics) await pushMetrics(metrics);
@@ -343,8 +328,6 @@
     pushTimer = setInterval(() => obs.flush(), PUSH_MS);
   }
 
-  // Expose globally so app.js can call obs hooks
   window.OTT_OBS = obs;
-
-  console.info("[OBS] Observability module loaded. Push interval:", PUSH_MS / 1000, "s");
+  console.info("[OBS] Observability module loaded.");
 })();
