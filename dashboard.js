@@ -63,24 +63,21 @@
 
     // Initial load
     if (dataToggle && dataToggle.checked) {
-      startDummyData();
-      if ($("dummyDataSection")) $("dummyDataSection").style.display = "block";
+      loadFromStorage();
+      renderAll();
+      if ($("nativeDataSection")) $("nativeDataSection").style.display = "block";
       if ($("realDataSection")) $("realDataSection").style.display = "none";
     } else {
       loadFromStorage();
       renderAll();
-      if ($("dummyDataSection")) $("dummyDataSection").style.display = "none";
+      if ($("nativeDataSection")) $("nativeDataSection").style.display = "none";
       if ($("realDataSection")) $("realDataSection").style.display = "block";
     }
 
     if ($("refreshDash")) {
       $("refreshDash").addEventListener("click", () => {
-        if (window.isDemoMode) {
-          startDummyData();
-        } else {
-          loadFromStorage();
-          renderAll();
-        }
+        loadFromStorage();
+        renderAll();
         toast("Dashboard refreshed");
       });
     }
@@ -88,24 +85,22 @@
     if (dataToggle) {
       const toggleLabel = $("dataToggleLabel");
       if (toggleLabel) {
-        toggleLabel.textContent = dataToggle.checked ? "Dummy Data" : "Live Data";
+        toggleLabel.textContent = dataToggle.checked ? "Local Metrics" : "Grafana View";
       }
 
       dataToggle.addEventListener("change", (e) => {
         if (e.target.checked) {
-          if ($("dummyDataSection")) $("dummyDataSection").style.display = "block";
+          if ($("nativeDataSection")) $("nativeDataSection").style.display = "block";
           if ($("realDataSection")) $("realDataSection").style.display = "none";
-          if (toggleLabel) toggleLabel.textContent = "Dummy Data";
-          startDummyData();
-          toast("Showing dummy data");
-        } else {
-          if ($("dummyDataSection")) $("dummyDataSection").style.display = "none";
-          if ($("realDataSection")) $("realDataSection").style.display = "block";
-          if (toggleLabel) toggleLabel.textContent = "Live Data";
-          stopDummyData();
+          if (toggleLabel) toggleLabel.textContent = "Local Metrics";
           loadFromStorage();
           renderAll();
-          toast("Showing real Grafana data");
+          toast("Showing local UI");
+        } else {
+          if ($("nativeDataSection")) $("nativeDataSection").style.display = "none";
+          if ($("realDataSection")) $("realDataSection").style.display = "block";
+          if (toggleLabel) toggleLabel.textContent = "Grafana View";
+          toast("Showing Grafana iframe");
         }
       });
     }
@@ -113,78 +108,23 @@
 
   /* ── Grafana link ─────────────────────────────────────────── */
   function initGrafanaLink() {
-    const url = "https://grafana-proxy.pdekprof.workers.dev/public-dashboards/5c2d088d56cf443ea60b176a6a8b4ae7";
+    const url = "https://grafana-proxy.pdekprof.workers.dev/public-dashboards/8d0dcd9a078a4737a2ba032a40b54e3a";
     const el = $("grafanaLink");
     if (el) el.href = url;
   }
 
   /* ── Storage helpers ──────────────────────────────────────── */
   function loadFromStorage() {
-    if (window.isDemoMode) return;
     qoeHistory = safeJson(LS_QOE_HISTORY) || [];
     cdnHistory = safeJson(LS_CDN_HISTORY) || [];
 
     // If local storage is empty, try to fetch global aggregated data from Grafana
-    if (qoeHistory.length === 0) {
+    if (qoeHistory.length === 0 || cdnHistory.length === 0) {
       fetchGlobalMetrics();
     }
   }
 
-  function generateDummyPoint(ts) {
-    return {
-      qoe: {
-        ts,
-        startup_time_seconds: 1 + Math.random() * 2.5,
-        avg_bitrate_kbps: 2000 + Math.random() * 3000,
-        rebuffer_ratio: Math.random() * 0.04,
-        error_rate: Math.random() > 0.9 ? 0.01 : 0,
-        avg_bandwidth_kbps: 4000 + Math.random() * 5000,
-        dropped_frames: Math.floor(Math.random() * 10),
-        labels: {
-          device_type: ["Mobile", "Desktop", "TV"][Math.floor(Math.random() * 3)],
-          network_type: ["WiFi", "4G", "5G"][Math.floor(Math.random() * 3)]
-        }
-      },
-      cdn: {
-        ts,
-        cacheHitRatio: 0.65 + Math.random() * 0.3,
-        requests: Math.floor(100 + Math.random() * 500),
-        errorRate: Math.random() * 0.03,
-        bytes: Math.floor(5e6 + Math.random() * 20e6)
-      }
-    };
-  }
 
-  function startDummyData() {
-    window.isDemoMode = true;
-    qoeHistory = [];
-    cdnHistory = [];
-    const now = Date.now();
-    for (let i = 19; i >= 0; i--) {
-      const pt = generateDummyPoint(now - i * 5000);
-      qoeHistory.push(pt.qoe);
-      cdnHistory.push(pt.cdn);
-    }
-    renderAll();
-
-    if (dummyInterval) clearInterval(dummyInterval);
-    dummyInterval = setInterval(() => {
-      const pt = generateDummyPoint(Date.now());
-      qoeHistory.shift();
-      cdnHistory.shift();
-      qoeHistory.push(pt.qoe);
-      cdnHistory.push(pt.cdn);
-      renderAll();
-    }, 5000);
-  }
-
-  function stopDummyData() {
-    window.isDemoMode = false;
-    if (dummyInterval) {
-      clearInterval(dummyInterval);
-      dummyInterval = null;
-    }
-  }
 
   function safeJson(key) {
     try { return JSON.parse(localStorage.getItem(key)); }
@@ -706,7 +646,6 @@
   function startPolling() {
     // Poll window.OTT_OBS for live session metrics every 5 s
     setInterval(async () => {
-      if (window.isDemoMode) return;
       const obs = window.OTT_OBS;
       if (obs && typeof obs.flush === "function") {
         // grab the current in-memory metrics snapshot

@@ -10,15 +10,52 @@
     }
   ],
   "__requires": [
-    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
-    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
-    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
-    { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
-    { "type": "panel", "id": "gauge", "name": "Gauge", "version": "" },
-    { "type": "panel", "id": "piechart", "name": "Pie chart", "version": "" },
-    { "type": "panel", "id": "table", "name": "Table", "version": "" }
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "piechart",
+      "name": "Pie chart",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
   ],
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "description": "VigilSiddhi OTT – Client QoE + Cloudflare CDN observability dashboard",
   "editable": true,
   "fiscalYearStartMonth": 0,
@@ -27,571 +64,517 @@
   "links": [],
   "panels": [
     {
+      "datasource": null,
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "mode": "markdown",
+      "options": {
+        "content": "<div style=\"display: flex; align-items: center; justify-content: center; height: 100%;\">\n  <img src=\"public/img/logo.png\" style=\"height: 60px; margin-right: 20px;\">\n  <h1 style=\"font-size: 32px; color: #00B4D8; margin: 0;\">VigilSiddhi OTT</h1>\n  <span style=\"margin-left: 20px; font-size: 14px; opacity: 0.7;\">Live Observability Dashboard</span>\n</div>"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
-      "id": 100,
-      "title": "📺 Client QoE Metrics",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 2,
+      "title": "📊 Global CDN Performance KPIs",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 2 },
-              { "color": "red", "value": 3 }
-            ]
-          },
-          "unit": "s",
-          "mappings": []
-        },
-        "overrides": []
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
       },
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
-      "id": 1,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 5
       },
-      "title": "Avg Startup Time",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_startup_time_seconds{region=\"IN\"})",
-          "legendFormat": "Startup Time",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.015 },
-              { "color": "red", "value": 0.03 }
-            ]
-          },
-          "unit": "percentunit",
-          "min": 0,
-          "max": 0.2
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
-      "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
-      },
-      "title": "Avg Rebuffer Ratio",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_rebuffer_ratio{region=\"IN\"})",
-          "legendFormat": "Rebuffer Ratio",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": 800 },
-              { "color": "green", "value": 1500 }
-            ]
-          },
-          "unit": "none",
-          "custom": { "displayMode": "auto" }
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
       "id": 3,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
-      },
-      "title": "Avg Bitrate (kbps)",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_avg_bitrate_kbps{region=\"IN\"})",
-          "legendFormat": "Avg Bitrate",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 0.01 }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
-      "id": 4,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
-      },
-      "title": "Error Rate",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_error_rate{region=\"IN\"})",
-          "legendFormat": "Error Rate",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
-      "id": 5,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "justifyMode": "center",
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+        "justifyMode": "center"
       },
-      "title": "Active Sessions",
+      "title": "Total Requests (24h)",
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "sum(qoe_active_sessions)",
-          "legendFormat": "Active Sessions",
+          "expr": "sum(cdn_requests)",
+          "legendFormat": "Requests",
           "refId": "A"
         }
       ]
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity", "spanNulls": true }
-        },
-        "overrides": [
-          { "matcher": { "id": "byName", "options": "Startup Time (s)" }, "properties": [{ "id": "unit", "value": "s" }, { "id": "color", "value": { "fixedColor": "#27d7ff", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Rebuffer %" }, "properties": [{ "id": "unit", "value": "percent" }, { "id": "color", "value": { "fixedColor": "#ffb347", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Bitrate kbps ÷ 10" }, "properties": [{ "id": "color", "value": { "fixedColor": "#7dffbf", "mode": "fixed" } }] }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
-      "id": 10,
-      "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "lastNotNull"] },
-        "tooltip": { "mode": "multi", "sort": "none" }
-      },
-      "title": "QoE Metrics — Time Series",
-      "type": "timeseries",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_startup_time_seconds{region=\"IN\"})",
-          "legendFormat": "Startup Time (s)",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_rebuffer_ratio{region=\"IN\"}) * 100",
-          "legendFormat": "Rebuffer %",
-          "refId": "B"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_avg_bitrate_kbps{region=\"IN\"}) / 10",
-          "legendFormat": "Bitrate kbps ÷ 10",
-          "refId": "C"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" }, "custom": {} },
-        "overrides": []
-      },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 13 },
-      "id": 11,
-      "options": { "legend": { "displayMode": "table", "placement": "right" }, "pieType": "donut" },
-      "title": "Sessions by Device Type",
-      "type": "piechart",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "sum by (device_type) (qoe_active_sessions)",
-          "legendFormat": "{{device_type}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" }, "custom": {} },
-        "overrides": []
-      },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 13 },
-      "id": 12,
-      "options": { "legend": { "displayMode": "table", "placement": "right" }, "pieType": "donut" },
-      "title": "Sessions by Network Type",
-      "type": "piechart",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "sum by (network_type) (qoe_active_sessions)",
-          "legendFormat": "{{network_type}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 },
-      "id": 200,
-      "title": "☁️ CDN Metrics — Cloudflare",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
+          "unit": "percentunit",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": 0.7 },
-              { "color": "green", "value": 0.85 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.7
+              }
             ]
-          },
-          "unit": "percentunit",
-          "min": 0,
-          "max": 1
-        },
-        "overrides": []
+          }
+        }
       },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 21 },
-      "id": 21,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 5
+      },
+      "id": 4,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        "justifyMode": "center"
       },
       "title": "Cache Hit Ratio",
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "cdn_cache_hit_ratio",
-          "legendFormat": "Cache Hit Ratio",
+          "expr": "sum(cdn_cached_requests) / sum(cdn_requests)",
+          "legendFormat": "CHR",
           "refId": "A"
         }
       ]
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 21 },
-      "id": 22,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
-      },
-      "title": "CDN Request Rate",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "rate(cdn_requests_total[5m])",
-          "legendFormat": "Requests/s",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
           "unit": "decbytes"
-        },
-        "overrides": []
+        }
       },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 21 },
-      "id": 23,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 5
+      },
+      "id": 5,
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        "justifyMode": "center"
       },
-      "title": "Bandwidth Usage",
+      "title": "Bandwidth (Egress)",
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "cdn_bandwidth_bytes",
+          "expr": "sum(cdn_bytes)",
           "legendFormat": "Bandwidth",
           "refId": "A"
         }
       ]
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "unit": "percentunit",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.01 },
-              { "color": "red", "value": 0.02 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.1
+              }
             ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
+          }
+        }
       },
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 21 },
-      "id": 24,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 5
+      },
+      "id": 6,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        "justifyMode": "center"
       },
-      "title": "CDN Error Rate",
+      "title": "Bandwidth Saved",
       "type": "stat",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "cdn_error_rate",
-          "legendFormat": "CDN Error Rate",
+          "expr": "sum(cdn_cached_bytes) / sum(cdn_bytes)",
+          "legendFormat": "Saved",
           "refId": "A"
         }
       ]
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "lineWidth": 2, "fillOpacity": 12, "gradientMode": "opacity", "spanNulls": true }
-        },
-        "overrides": [
-          { "matcher": { "id": "byName", "options": "Cache Hit %" }, "properties": [{ "id": "color", "value": { "fixedColor": "#7dffbf", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Error Rate %" }, "properties": [{ "id": "color", "value": { "fixedColor": "#ff5f7a", "mode": "fixed" } }] }
-        ]
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 25 },
-      "id": 30,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 5
+      },
+      "id": 7,
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "lastNotNull"] },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "colorMode": "value",
+        "justifyMode": "center"
       },
-      "title": "CDN Metrics — Time Series",
+      "title": "Blocked Threats",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(cdn_threats)",
+          "legendFormat": "Threats",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 5
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "justifyMode": "center"
+      },
+      "title": "Unique Pageviews",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(cdn_pageviews)",
+          "legendFormat": "Pageviews",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 10,
+      "title": "🌐 CDN Traffic Breakdowns",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 10
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "pieType": "donut"
+      },
+      "title": "🌍 Requests by Country",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (country) (cdn_requests_by_country)",
+          "legendFormat": "{{country}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 10
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "pieType": "donut"
+      },
+      "title": "🏥 Edge Status Codes",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (status) (cdn_requests_by_status)",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 10
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "pieType": "donut"
+      },
+      "title": "📱 Device/Browser Analytics",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (browser) (cdn_requests_by_browser)",
+          "legendFormat": "{{browser}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "pieType": "donut"
+      },
+      "title": "⚡ Protocol Version (HTTP/x)",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (version) (cdn_requests_by_http_version)",
+          "legendFormat": "{{version}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "pieType": "donut"
+      },
+      "title": "📦 Asset Content Types",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (type) (cdn_requests_by_content_type)",
+          "legendFormat": "{{type}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 20,
+      "title": "📺 Player QoE & Performance",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 21,
+      "title": "Startup & Buffering Trends",
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "cdn_cache_hit_ratio * 100",
-          "legendFormat": "Cache Hit %",
+          "expr": "avg(qoe_startup_time_seconds)",
+          "legendFormat": "Startup (s)",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "cdn_error_rate * 100",
-          "legendFormat": "Error Rate %",
+          "expr": "avg(qoe_rebuffer_ratio) * 100",
+          "legendFormat": "Rebuffer %",
           "refId": "B"
         }
       ]
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 },
-      "id": 300,
-      "title": "🔗 Correlation Panels",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 30,
+      "title": "🌍 World Map",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "lineWidth": 2, "fillOpacity": 8, "spanNulls": true }
-        },
-        "overrides": []
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_GRAFANACLOUD_PROMETHEUS}"
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 34 },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      },
       "id": 31,
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
-      },
-      "title": "Rebuffer Ratio vs Cache Hit Ratio",
-      "type": "timeseries",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_rebuffer_ratio) * 100",
-          "legendFormat": "Rebuffer Ratio %",
-          "refId": "A"
+        "basemap": {
+          "config": {},
+          "name": "Layer 0",
+          "type": "default"
         },
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "cdn_cache_hit_ratio * 100",
-          "legendFormat": "Cache Hit %",
-          "refId": "B"
-        }
-      ]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "lineWidth": 2, "fillOpacity": 8, "spanNulls": true }
+        "controls": {
+          "showAttribution": true,
+          "showDebug": false,
+          "showZoom": true
         },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 34 },
-      "id": 32,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
-      },
-      "title": "Avg Bitrate vs Client Bandwidth",
-      "type": "timeseries",
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_avg_bitrate_kbps)",
-          "legendFormat": "Avg Bitrate kbps",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_avg_bandwidth_kbps)",
-          "legendFormat": "Client Bandwidth kbps",
-          "refId": "B"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 42 },
-      "id": 400,
-      "title": "🔔 Alert Summary",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "custom": { "align": "auto", "displayMode": "color-text" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }]
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "dark-blue"
+                },
+                "opacity": 0.4,
+                "rotation": {
+                  "fixed": 0
+                },
+                "size": {
+                  "field": "value",
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "circle"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "id": "lookup",
+              "options": {
+                "mapping": {
+                  "text": "country"
+                }
+              }
+            },
+            "name": "Requests by Country",
+            "tooltip": true,
+            "type": "markers"
           }
-        },
-        "overrides": []
+        ],
+        "view": {
+          "id": "world",
+          "lat": 20,
+          "lon": 78,
+          "zoom": 4
+        }
       },
-      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 43 },
-      "id": 41,
-      "options": {
-        "footer": { "show": false },
-        "showHeader": true
-      },
-      "title": "Alert Threshold Status",
-      "type": "table",
+      "title": "Request Origin Map",
+      "type": "geomap",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_startup_time_seconds) > 3",
-          "legendFormat": "startup_time_breach",
-          "refId": "A",
-          "instant": true
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "avg(qoe_rebuffer_ratio) > 0.03",
-          "legendFormat": "rebuffer_ratio_breach",
-          "refId": "B",
-          "instant": true
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "cdn_cache_hit_ratio < 0.7",
-          "legendFormat": "cache_hit_low",
-          "refId": "C",
-          "instant": true
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${DS_GRAFANACLOUD_PROMETHEUS}" },
-          "expr": "cdn_error_rate > 0.02",
-          "legendFormat": "cdn_error_high",
-          "refId": "D",
-          "instant": true
+          "expr": "sum by (country) (cdn_requests_by_country)",
+          "format": "table",
+          "refId": "A"
         }
       ]
     }
@@ -599,7 +582,13 @@
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["ott", "qoe", "cdn", "cloudflare", "grafana-cloud"],
+  "tags": [
+    "ott",
+    "qoe",
+    "cdn",
+    "cloudflare",
+    "grafana-cloud"
+  ],
   "templating": {
     "list": [
       {
@@ -620,10 +609,13 @@
       }
     ]
   },
-  "time": { "from": "now-6h", "to": "now" },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "VigilSiddhi OTT Observability",
   "uid": "vigil-ott-obs-v1",
-  "version": 1
+  "version": 2
 }
