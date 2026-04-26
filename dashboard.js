@@ -14,27 +14,27 @@
 (() => {
   "use strict";
 
-  const CFG  = window.OTT_OBSERVABILITY || {};
+  const CFG = window.OTT_OBSERVABILITY || {};
 
   // ── Storage keys (shared with observability.js) ─────────────
-  const LS_QOE_HISTORY = "ott-obs-qoe-history-v1";
-  const LS_CDN_HISTORY = "ott-obs-cdn-history-v1";
-  const MAX_HISTORY    = 20;
+  const LS_QOE_HISTORY = "ott_qoe_history";
+  const LS_CDN_HISTORY = "ott_cdn_history";
+  const MAX_HISTORY = 20;
 
   // ── DOM refs ────────────────────────────────────────────────
   const $ = (id) => document.getElementById(id);
 
   // ── Design tokens (match styles.css vars) ──────────────────
   const C = {
-    accent:  "#27d7ff",
-    strong:  "#72f0ff",
-    amber:   "#ffb347",
-    green:   "#7dffbf",
-    red:     "#ff5f7a",
-    purple:  "#c490ff",
-    muted:   "rgba(157,177,195,0.7)",
-    grid:    "rgba(157,230,255,0.1)",
-    text:    "#f5fbff"
+    accent: "#27d7ff",
+    strong: "#72f0ff",
+    amber: "#ffb347",
+    green: "#7dffbf",
+    red: "#ff5f7a",
+    purple: "#c490ff",
+    muted: "rgba(157,177,195,0.7)",
+    grid: "rgba(157,230,255,0.1)",
+    text: "#f5fbff"
   };
 
   const CHART_DEFAULTS = {
@@ -50,7 +50,7 @@
   // ── State ───────────────────────────────────────────────────
   let qoeHistory = [];   // array of aggregated QoE objects
   let cdnHistory = [];   // array of CDN objects
-  let charts     = {};   // Chart.js instances
+  let charts = {};   // Chart.js instances
   let dummyInterval = null;
 
   /* ── boot ─────────────────────────────────────────────────── */
@@ -60,24 +60,30 @@
     startPolling();
 
     const dataToggle = $("dataToggle");
-    
+
     // Initial load
     if (dataToggle && dataToggle.checked) {
       startDummyData();
+      if ($("dummyDataSection")) $("dummyDataSection").style.display = "block";
+      if ($("realDataSection")) $("realDataSection").style.display = "none";
     } else {
       loadFromStorage();
       renderAll();
+      if ($("dummyDataSection")) $("dummyDataSection").style.display = "none";
+      if ($("realDataSection")) $("realDataSection").style.display = "block";
     }
 
-    $("refreshDash").addEventListener("click", () => {
-      if (window.isDemoMode) {
-        startDummyData();
-      } else {
-        loadFromStorage();
-        renderAll();
-      }
-      toast("Dashboard refreshed");
-    });
+    if ($("refreshDash")) {
+      $("refreshDash").addEventListener("click", () => {
+        if (window.isDemoMode) {
+          startDummyData();
+        } else {
+          loadFromStorage();
+          renderAll();
+        }
+        toast("Dashboard refreshed");
+      });
+    }
 
     if (dataToggle) {
       const toggleLabel = $("dataToggleLabel");
@@ -87,14 +93,14 @@
 
       dataToggle.addEventListener("change", (e) => {
         if (e.target.checked) {
-          $("dummyDataSection").style.display = "block";
-          $("realDataSection").style.display = "none";
+          if ($("dummyDataSection")) $("dummyDataSection").style.display = "block";
+          if ($("realDataSection")) $("realDataSection").style.display = "none";
           if (toggleLabel) toggleLabel.textContent = "Dummy Data";
           startDummyData();
           toast("Showing dummy data");
         } else {
-          $("dummyDataSection").style.display = "none";
-          $("realDataSection").style.display = "block";
+          if ($("dummyDataSection")) $("dummyDataSection").style.display = "none";
+          if ($("realDataSection")) $("realDataSection").style.display = "block";
           if (toggleLabel) toggleLabel.textContent = "Live Data";
           stopDummyData();
           loadFromStorage();
@@ -107,8 +113,9 @@
 
   /* ── Grafana link ─────────────────────────────────────────── */
   function initGrafanaLink() {
-    const base = CFG.grafanaBaseUrl || "https://vigilsiddhi.grafana.net";
-    $("grafanaLink").href = base;
+    const url = "https://grafana-proxy.pdekprof.workers.dev/public-dashboards/5c2d088d56cf443ea60b176a6a8b4ae7";
+    const el = $("grafanaLink");
+    if (el) el.href = url;
   }
 
   /* ── Storage helpers ──────────────────────────────────────── */
@@ -116,7 +123,7 @@
     if (window.isDemoMode) return;
     qoeHistory = safeJson(LS_QOE_HISTORY) || [];
     cdnHistory = safeJson(LS_CDN_HISTORY) || [];
-    
+
     // If local storage is empty, try to fetch global aggregated data from Grafana
     if (qoeHistory.length === 0) {
       fetchGlobalMetrics();
@@ -153,13 +160,13 @@
     qoeHistory = [];
     cdnHistory = [];
     const now = Date.now();
-    for(let i=19; i>=0; i--) {
+    for (let i = 19; i >= 0; i--) {
       const pt = generateDummyPoint(now - i * 5000);
       qoeHistory.push(pt.qoe);
       cdnHistory.push(pt.cdn);
     }
     renderAll();
-    
+
     if (dummyInterval) clearInterval(dummyInterval);
     dummyInterval = setInterval(() => {
       const pt = generateDummyPoint(Date.now());
@@ -186,16 +193,22 @@
 
   /* ── Chart initialization ─────────────────────────────────── */
   function buildCharts() {
+    const createChart = (id, config) => {
+      const el = $(id);
+      if (!el) return null;
+      try { return new Chart(el, config); }
+      catch (e) { console.warn(`[DASH] Failed to init chart ${id}`, e); return null; }
+    };
 
     // QoE time series
-    charts.qoe = new Chart($("qoeTimeSeries"), {
+    charts.qoe = createChart("qoeTimeSeries", {
       type: "line",
       data: {
-        labels:   [],
+        labels: [],
         datasets: [
-          { label: "Startup (s)",     data: [], borderColor: C.accent,  tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 },
-          { label: "Rebuffer %",      data: [], borderColor: C.amber,   tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 },
-          { label: "Bitrate ÷ 100",   data: [], borderColor: C.green,   tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 }
+          { label: "Startup (s)", data: [], borderColor: C.accent, tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 },
+          { label: "Rebuffer %", data: [], borderColor: C.amber, tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 },
+          { label: "Bitrate ÷ 100", data: [], borderColor: C.green, tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 }
         ]
       },
       options: {
@@ -213,13 +226,13 @@
     });
 
     // CDN time series
-    charts.cdn = new Chart($("cdnTimeSeries"), {
+    charts.cdn = createChart("cdnTimeSeries", {
       type: "line",
       data: {
-        labels:   [],
+        labels: [],
         datasets: [
-          { label: "Cache Hit %",  data: [], borderColor: C.green, tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 },
-          { label: "Error Rate %", data: [], borderColor: C.red,   tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 }
+          { label: "Cache Hit %", data: [], borderColor: C.green, tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 },
+          { label: "Error Rate %", data: [], borderColor: C.red, tension: 0.4, pointRadius: 2, fill: false, borderWidth: 2 }
         ]
       },
       options: {
@@ -237,11 +250,11 @@
     });
 
     // Device pie
-    charts.device = new Chart($("devicePie"), {
+    charts.device = createChart("devicePie", {
       type: "doughnut",
       data: {
-        labels:   ["Mobile", "Desktop", "TV"],
-        datasets: [{ data: [0,0,0], backgroundColor: [C.accent, C.green, C.amber], borderWidth: 0 }]
+        labels: ["Mobile", "Desktop", "TV"],
+        datasets: [{ data: [0, 0, 0], backgroundColor: [C.accent, C.green, C.amber], borderWidth: 0 }]
       },
       options: {
         responsive: true,
@@ -251,11 +264,11 @@
     });
 
     // Network pie
-    charts.network = new Chart($("networkPie"), {
+    charts.network = createChart("networkPie", {
       type: "doughnut",
       data: {
-        labels:   ["WiFi", "4G", "5G", "Unknown"],
-        datasets: [{ data: [0,0,0,0], backgroundColor: [C.accent, C.green, C.purple, C.muted], borderWidth: 0 }]
+        labels: ["WiFi", "4G", "5G", "Unknown"],
+        datasets: [{ data: [0, 0, 0, 0], backgroundColor: [C.accent, C.green, C.purple, C.muted], borderWidth: 0 }]
       },
       options: {
         responsive: true,
@@ -265,7 +278,7 @@
     });
 
     // Correlation: rebuffer vs cache hit
-    charts.corrRC = new Chart($("corrRebufferCache"), {
+    charts.corrRC = createChart("corrRebufferCache", {
       type: "scatter",
       data: {
         datasets: [{
@@ -288,13 +301,13 @@
         },
         scales: {
           x: { title: { display: true, text: "Cache Hit Ratio", color: C.muted }, ticks: { color: C.muted }, grid: { color: C.grid } },
-          y: { title: { display: true, text: "Rebuffer Ratio",  color: C.muted }, ticks: { color: C.muted }, grid: { color: C.grid } }
+          y: { title: { display: true, text: "Rebuffer Ratio", color: C.muted }, ticks: { color: C.muted }, grid: { color: C.grid } }
         }
       }
     });
 
     // Correlation: bitrate vs bandwidth
-    charts.corrBB = new Chart($("corrBitrateBandwidth"), {
+    charts.corrBB = createChart("corrBitrateBandwidth", {
       type: "scatter",
       data: {
         datasets: [{
@@ -310,18 +323,16 @@
         plugins: { legend: { display: false } },
         scales: {
           x: { title: { display: true, text: "Bandwidth kbps", color: C.muted }, ticks: { color: C.muted }, grid: { color: C.grid } },
-          y: { title: { display: true, text: "Bitrate kbps",   color: C.muted }, ticks: { color: C.muted }, grid: { color: C.grid } }
+          y: { title: { display: true, text: "Bitrate kbps", color: C.muted }, ticks: { color: C.muted }, grid: { color: C.grid } }
         }
       }
     });
 
     // Sparklines (tiny, no axes)
-    const sparkIds = ["sparkStartup","sparkRebuffer","sparkBitrate","sparkError","sparkBandwidth","sparkDropped","sparkCacheHit","sparkCdnRequests","sparkCdnBandwidth","sparkCdnError"];
+    const sparkIds = ["sparkStartup", "sparkRebuffer", "sparkBitrate", "sparkError", "sparkBandwidth", "sparkDropped", "sparkCacheHit", "sparkCdnRequests", "sparkCdnBandwidth", "sparkCdnError"];
     const sparkColors = [C.accent, C.amber, C.green, C.red, C.accent, C.purple, C.green, C.accent, C.accent, C.red];
     sparkIds.forEach((id, i) => {
-      const el = $(id);
-      if (!el) return;
-      charts[id] = new Chart(el, {
+      charts[id] = createChart(id, {
         type: "line",
         data: { labels: [], datasets: [{ data: [], borderColor: sparkColors[i], fill: false, borderWidth: 1.5, pointRadius: 0, tension: 0.4 }] },
         options: { ...CHART_DEFAULTS, animation: false }
@@ -357,14 +368,14 @@
   function setKpiState(cardId, state) {
     const card = $(cardId);
     if (!card) return;
-    card.classList.remove("kpi-ok","kpi-warn","kpi-crit");
+    card.classList.remove("kpi-ok", "kpi-warn", "kpi-crit");
     if (state) card.classList.add(state);
   }
 
   function updateSparkline(chartId, values) {
     const c = charts[chartId];
     if (!c) return;
-    c.data.labels   = values.map((_, i) => i);
+    c.data.labels = values.map((_, i) => i);
     c.data.datasets[0].data = values;
     c.update("none");
   }
@@ -376,175 +387,199 @@
     renderCorrelations();
     renderAlerts();
     renderLiveStatus();
-    $("footerTs").textContent = "Last updated: " + new Date().toLocaleTimeString();
+    const tsEl = $("footerTs");
+    if (tsEl) tsEl.textContent = "Last updated: " + new Date().toLocaleTimeString();
   }
 
   function renderQoE() {
     if (!qoeHistory.length) return;
 
-    const avgStartup   = avg(qoeHistory, "startup_time_seconds");
-    const avgRebuf     = avg(qoeHistory, "rebuffer_ratio");
-    const avgBitrate   = avg(qoeHistory, "avg_bitrate_kbps");
-    const avgError     = avg(qoeHistory, "error_rate");
+    const avgStartup = avg(qoeHistory, "startup_time_seconds");
+    const avgRebuf = avg(qoeHistory, "rebuffer_ratio");
+    const avgBitrate = avg(qoeHistory, "avg_bitrate_kbps");
+    const avgError = avg(qoeHistory, "error_rate");
     const avgBandwidth = avg(qoeHistory, "avg_bandwidth_kbps");
-    const avgDropped   = avg(qoeHistory, "dropped_frames");
+    const avgDropped = avg(qoeHistory, "dropped_frames");
 
     // KPI values
-    setKpi("valStartup",   avgStartup.toFixed(2) + " s");
-    setKpi("valRebuffer",  (avgRebuf * 100).toFixed(2) + " %");
-    setKpi("valBitrate",   Math.round(avgBitrate) + " kbps");
-    setKpi("valError",     (avgError * 100).toFixed(1) + " %");
+    setKpi("valStartup", avgStartup.toFixed(2) + " s");
+    setKpi("valRebuffer", (avgRebuf * 100).toFixed(2) + " %");
+    setKpi("valBitrate", Math.round(avgBitrate) + " kbps");
+    setKpi("valError", (avgError * 100).toFixed(1) + " %");
     setKpi("valBandwidth", Math.round(avgBandwidth) + " kbps");
-    setKpi("valDropped",   Math.round(avgDropped));
+    setKpi("valDropped", Math.round(avgDropped));
 
     // KPI state
-    setKpiState("kpiStartup",  avgStartup > 3  ? "kpi-crit" : avgStartup > 2 ? "kpi-warn" : "kpi-ok");
-    setKpiState("kpiRebuffer", avgRebuf   > 0.03? "kpi-crit" : avgRebuf > 0.015 ? "kpi-warn" : "kpi-ok");
-    setKpiState("kpiError",    avgError   > 0   ? "kpi-warn" : "kpi-ok");
+    setKpiState("kpiStartup", avgStartup > 3 ? "kpi-crit" : avgStartup > 2 ? "kpi-warn" : "kpi-ok");
+    setKpiState("kpiRebuffer", avgRebuf > 0.03 ? "kpi-crit" : avgRebuf > 0.015 ? "kpi-warn" : "kpi-ok");
+    setKpiState("kpiError", avgError > 0 ? "kpi-warn" : "kpi-ok");
 
     // Session count
-    $("qoeSessionCount").textContent = qoeHistory.length + " data points";
+    const sessCount = $("qoeSessionCount");
+    if (sessCount) sessCount.textContent = qoeHistory.length + " data points";
 
     // Time-series chart
-    const labels = qoeHistory.map(r => fmtTime(r.ts));
-    charts.qoe.data.labels = labels;
-    charts.qoe.data.datasets[0].data = qoeHistory.map(r => r.startup_time_seconds);
-    charts.qoe.data.datasets[1].data = qoeHistory.map(r => r.rebuffer_ratio * 100);
-    charts.qoe.data.datasets[2].data = qoeHistory.map(r => r.avg_bitrate_kbps / 100);
-    charts.qoe.update();
+    if (charts.qoe) {
+      const labels = qoeHistory.map(r => fmtTime(r.ts));
+      charts.qoe.data.labels = labels;
+      charts.qoe.data.datasets[0].data = qoeHistory.map(r => r.startup_time_seconds);
+      charts.qoe.data.datasets[1].data = qoeHistory.map(r => r.rebuffer_ratio * 100);
+      charts.qoe.data.datasets[2].data = qoeHistory.map(r => r.avg_bitrate_kbps / 100);
+      charts.qoe.update();
+    }
 
     // Sparklines
-    updateSparkline("sparkStartup",   qoeHistory.map(r => r.startup_time_seconds));
-    updateSparkline("sparkRebuffer",  qoeHistory.map(r => r.rebuffer_ratio * 100));
-    updateSparkline("sparkBitrate",   qoeHistory.map(r => r.avg_bitrate_kbps));
-    updateSparkline("sparkError",     qoeHistory.map(r => r.error_rate));
+    updateSparkline("sparkStartup", qoeHistory.map(r => r.startup_time_seconds));
+    updateSparkline("sparkRebuffer", qoeHistory.map(r => r.rebuffer_ratio * 100));
+    updateSparkline("sparkBitrate", qoeHistory.map(r => r.avg_bitrate_kbps));
+    updateSparkline("sparkError", qoeHistory.map(r => r.error_rate));
     updateSparkline("sparkBandwidth", qoeHistory.map(r => r.avg_bandwidth_kbps));
-    updateSparkline("sparkDropped",   qoeHistory.map(r => r.dropped_frames));
+    updateSparkline("sparkDropped", qoeHistory.map(r => r.dropped_frames));
 
     // Device/network pies
-    const deviceCounts  = { mobile: 0, desktop: 0, tv: 0 };
-    const networkCounts = { wifi: 0, "4g": 0, "5g": 0, unknown: 0 };
-    for (const r of qoeHistory) {
-      const d = (r.labels?.device_type  || "desktop").toLowerCase();
-      const n = (r.labels?.network_type || "unknown").toLowerCase();
-      if (d in deviceCounts)  deviceCounts[d]++;  else deviceCounts.desktop++;
-      if (n in networkCounts) networkCounts[n]++;  else networkCounts.unknown++;
+    if (charts.device || charts.network) {
+      const deviceCounts = { mobile: 0, desktop: 0, tv: 0 };
+      const networkCounts = { wifi: 0, "4g": 0, "5g": 0, unknown: 0 };
+      for (const r of qoeHistory) {
+        const d = (r.labels?.device_type || "desktop").toLowerCase();
+        const n = (r.labels?.network_type || "unknown").toLowerCase();
+        if (d in deviceCounts) deviceCounts[d]++; else deviceCounts.desktop++;
+        if (n in networkCounts) networkCounts[n]++; else networkCounts.unknown++;
+      }
+      if (charts.device) {
+        charts.device.data.datasets[0].data = Object.values(deviceCounts);
+        charts.device.update();
+      }
+      if (charts.network) {
+        charts.network.data.datasets[0].data = Object.values(networkCounts);
+        charts.network.update();
+      }
     }
-    charts.device.data.datasets[0].data  = Object.values(deviceCounts);
-    charts.network.data.datasets[0].data = Object.values(networkCounts);
-    charts.device.update();
-    charts.network.update();
   }
 
   function renderCDN() {
     if (!cdnHistory.length) return;
 
     const latestCDN = last(cdnHistory);
-    const avgCache  = avg(cdnHistory, "cacheHitRatio");
-    const avgErr    = avg(cdnHistory, "errorRate");
-    const totReq    = latestCDN.requests;
-    const totBytes  = latestCDN.bytes;
+    const avgCache = avg(cdnHistory, "cacheHitRatio");
+    const avgErr = avg(cdnHistory, "errorRate");
+    const totReq = latestCDN.requests;
+    const totBytes = latestCDN.bytes;
 
-    setKpi("valCacheHit",      (avgCache * 100).toFixed(1) + " %");
-    setKpi("valCdnRequests",   totReq.toLocaleString());
-    setKpi("valCdnBandwidth",  fmtBytes(totBytes));
-    setKpi("valCdnError",      (avgErr * 100).toFixed(3) + " %");
+    setKpi("valCacheHit", (avgCache * 100).toFixed(1) + " %");
+    setKpi("valCdnRequests", totReq.toLocaleString());
+    setKpi("valCdnBandwidth", fmtBytes(totBytes));
+    setKpi("valCdnError", (avgErr * 100).toFixed(3) + " %");
 
-    setKpiState("kpiCacheHit", avgCache   < 0.7  ? "kpi-crit" : avgCache < 0.8 ? "kpi-warn" : "kpi-ok");
-    setKpiState("kpiCdnError",  avgErr    > 0.02  ? "kpi-crit" : avgErr > 0.01  ? "kpi-warn" : "kpi-ok");
+    setKpiState("kpiCacheHit", avgCache < 0.7 ? "kpi-crit" : avgCache < 0.8 ? "kpi-warn" : "kpi-ok");
+    setKpiState("kpiCdnError", avgErr > 0.02 ? "kpi-crit" : avgErr > 0.01 ? "kpi-warn" : "kpi-ok");
 
-    $("cdnLastUpdate").textContent = "Updated " + fmtTime(latestCDN.ts);
+    const cdnLast = $("cdnLastUpdate");
+    if (cdnLast) cdnLast.textContent = "Updated " + fmtTime(latestCDN.ts);
 
     // CDN time-series
-    charts.cdn.data.labels = cdnHistory.map(r => fmtTime(r.ts));
-    charts.cdn.data.datasets[0].data = cdnHistory.map(r => (r.cacheHitRatio * 100));
-    charts.cdn.data.datasets[1].data = cdnHistory.map(r => (r.errorRate * 100));
-    charts.cdn.update();
+    if (charts.cdn) {
+      charts.cdn.data.labels = cdnHistory.map(r => fmtTime(r.ts));
+      charts.cdn.data.datasets[0].data = cdnHistory.map(r => (r.cacheHitRatio * 100));
+      charts.cdn.data.datasets[1].data = cdnHistory.map(r => (r.errorRate * 100));
+      charts.cdn.update();
+    }
 
-    updateSparkline("sparkCacheHit",    cdnHistory.map(r => r.cacheHitRatio * 100));
+    updateSparkline("sparkCacheHit", cdnHistory.map(r => r.cacheHitRatio * 100));
     updateSparkline("sparkCdnRequests", cdnHistory.map(r => r.requests));
-    updateSparkline("sparkCdnBandwidth",cdnHistory.map(r => r.bytes / 1e6));
-    updateSparkline("sparkCdnError",    cdnHistory.map(r => r.errorRate * 100));
+    updateSparkline("sparkCdnBandwidth", cdnHistory.map(r => r.bytes / 1e6));
+    updateSparkline("sparkCdnError", cdnHistory.map(r => r.errorRate * 100));
   }
 
   function renderCorrelations() {
+    if (!qoeHistory.length || !cdnHistory.length) return;
+
     // Pair each QoE point with the closest CDN point
     const pairs = qoeHistory.map((q, i) => ({
       qoe: q,
       cdn: cdnHistory[Math.min(i, cdnHistory.length - 1)]
     }));
 
-    charts.corrRC.data.datasets[0].data = pairs.map(p => ({
-      x: p.cdn.cacheHitRatio,
-      y: p.qoe.rebuffer_ratio
-    }));
-    charts.corrRC.update();
+    if (charts.corrRC) {
+      charts.corrRC.data.datasets[0].data = pairs.map(p => ({
+        x: p.cdn.cacheHitRatio,
+        y: p.qoe.rebuffer_ratio
+      }));
+      charts.corrRC.update();
+    }
 
-    charts.corrBB.data.datasets[0].data = pairs.map(p => ({
-      x: p.qoe.avg_bandwidth_kbps,
-      y: p.qoe.avg_bitrate_kbps
-    }));
-    charts.corrBB.update();
+    if (charts.corrBB) {
+      charts.corrBB.data.datasets[0].data = pairs.map(p => ({
+        x: p.qoe.avg_bandwidth_kbps,
+        y: p.qoe.avg_bitrate_kbps
+      }));
+      charts.corrBB.update();
+    }
   }
 
   function renderAlerts() {
     const thresholds = CFG.alerts || {};
-    const latestQoE  = last(qoeHistory) || {};
-    const latestCDN  = last(cdnHistory) || {};
+    const latestQoE = last(qoeHistory) || {};
+    const latestCDN = last(cdnHistory) || {};
 
     const rules = [
       {
-        name:      "Rebuffer Ratio",
+        name: "Rebuffer Ratio",
         threshold: `> ${(thresholds.rebufferRatioMax || 0.03) * 100} %`,
-        current:   (latestQoE.rebuffer_ratio || 0) * 100,
-        firing:    (latestQoE.rebuffer_ratio || 0) > (thresholds.rebufferRatioMax || 0.03),
-        format:    (v) => v.toFixed(2) + " %"
+        current: (latestQoE.rebuffer_ratio || 0) * 100,
+        firing: (latestQoE.rebuffer_ratio || 0) > (thresholds.rebufferRatioMax || 0.03),
+        format: (v) => v.toFixed(2) + " %"
       },
       {
-        name:      "Startup Time",
+        name: "Startup Time",
         threshold: `> ${thresholds.startupTimeMaxSec || 3} s`,
-        current:   latestQoE.startup_time_seconds || 0,
-        firing:    (latestQoE.startup_time_seconds || 0) > (thresholds.startupTimeMaxSec || 3),
-        format:    (v) => v.toFixed(2) + " s"
+        current: latestQoE.startup_time_seconds || 0,
+        firing: (latestQoE.startup_time_seconds || 0) > (thresholds.startupTimeMaxSec || 3),
+        format: (v) => v.toFixed(2) + " s"
       },
       {
-        name:      "Cache Hit Ratio",
+        name: "Cache Hit Ratio",
         threshold: `< ${(thresholds.cacheHitRatioMin || 0.7) * 100} %`,
-        current:   (latestCDN.cacheHitRatio || 1) * 100,
-        firing:    (latestCDN.cacheHitRatio || 1) < (thresholds.cacheHitRatioMin || 0.7),
-        format:    (v) => v.toFixed(1) + " %"
+        current: (latestCDN.cacheHitRatio || 1) * 100,
+        firing: (latestCDN.cacheHitRatio || 1) < (thresholds.cacheHitRatioMin || 0.7),
+        format: (v) => v.toFixed(1) + " %"
       },
       {
-        name:      "CDN Error Rate",
+        name: "CDN Error Rate",
         threshold: `> ${(thresholds.cdnErrorRateMax || 0.02) * 100} %`,
-        current:   (latestCDN.errorRate || 0) * 100,
-        firing:    (latestCDN.errorRate || 0) > (thresholds.cdnErrorRateMax || 0.02),
-        format:    (v) => v.toFixed(3) + " %"
+        current: (latestCDN.errorRate || 0) * 100,
+        firing: (latestCDN.errorRate || 0) > (thresholds.cdnErrorRateMax || 0.02),
+        format: (v) => v.toFixed(3) + " %"
       }
     ];
 
     const tbody = $("alertTableBody");
-    tbody.innerHTML = rules.map(r => `
-      <tr>
-        <td>${r.name}</td>
-        <td style="color:var(--muted)">${r.threshold}</td>
-        <td style="font-weight:700">${r.format(r.current)}</td>
-        <td>
-          <span class="alert-badge ${r.firing ? "firing" : "ok"}">
-            ${r.firing ? "🔴 FIRING" : "✅ OK"}
-          </span>
-        </td>
-      </tr>
-    `).join("");
+    if (tbody) {
+      tbody.innerHTML = rules.map(r => `
+        <tr>
+          <td>${r.name}</td>
+          <td style="color:var(--muted)">${r.threshold}</td>
+          <td style="font-weight:700">${r.format(r.current)}</td>
+          <td>
+            <span class="alert-badge ${r.firing ? "firing" : "ok"}">
+              ${r.firing ? "🔴 FIRING" : "✅ OK"}
+            </span>
+          </td>
+        </tr>
+      `).join("");
+    }
 
     // Alert banner
-    const firing = rules.filter(r => r.firing);
     const banner = $("alertBanner");
-    if (firing.length) {
-      banner.hidden = false;
-      $("alertText").textContent = "ALERT: " + firing.map(r => r.name).join(", ") + " threshold breached.";
-    } else {
-      banner.hidden = true;
+    if (banner) {
+      const firing = rules.filter(r => r.firing);
+      if (firing.length) {
+        banner.hidden = false;
+        const text = $("alertText");
+        if (text) text.textContent = "ALERT: " + firing.map(r => r.name).join(", ") + " threshold breached.";
+      } else {
+        banner.hidden = true;
+      }
     }
   }
 
@@ -554,7 +589,6 @@
     const key = CFG.prometheusApiKey;
 
     if (!queryUrl || !user || !key) {
-      console.warn("[DASH] Global metric fetch skipped: credentials missing.");
       return;
     }
 
@@ -581,11 +615,11 @@
         const history = [];
         const startupRes = results[0]?.data?.result[0]?.values || [];
         const bitrateRes = results[1]?.data?.result[0]?.values || [];
-        const rebufRes   = results[2]?.data?.result[0]?.values || [];
+        const rebufRes = results[2]?.data?.result[0]?.values || [];
 
         // Use timestamps from the first available result as a base
         const baseValues = startupRes.length ? startupRes : bitrateRes;
-        
+
         baseValues.forEach((val, idx) => {
           history.push({
             ts: val[0] * 1000,
@@ -615,8 +649,8 @@
       if (cdnResults.some(r => r && r.data && r.data.result.length)) {
         const history = [];
         const cacheRes = cdnResults[0]?.data?.result[0]?.values || [];
-        const reqRes   = cdnResults[1]?.data?.result[0]?.values || [];
-        const errRes   = cdnResults[2]?.data?.result[0]?.values || [];
+        const reqRes = cdnResults[1]?.data?.result[0]?.values || [];
+        const errRes = cdnResults[2]?.data?.result[0]?.values || [];
 
         cacheRes.forEach((val, idx) => {
           history.push({
@@ -639,22 +673,32 @@
   }
 
   function renderLiveStatus() {
-    const li  = $("liveIndicator");
-    const ls  = $("liveStatus");
-    
+    const li = $("liveIndicator");
+    const ls = $("liveStatus");
+    if (!li || !ls) return;
+
     const latest = qoeHistory.length ? qoeHistory[qoeHistory.length - 1] : null;
     const isFresh = latest && (Date.now() - latest.ts < 300_000); // 5 mins
     const hasRealData = (qoeHistory.length > 0);
 
-    if (hasRealData && isFresh) {
-      li.classList.remove("offline");
-      ls.textContent = "Live";
-    } else if (hasRealData) {
-      li.classList.add("offline");
-      ls.textContent = "Standby";
+    const parent = $("liveIndicatorParent");
+    if (parent) {
+      if (hasRealData && isFresh) {
+        parent.classList.remove("offline");
+        ls.textContent = "Live";
+      } else {
+        parent.classList.add("offline");
+        ls.textContent = hasRealData ? "Standby" : "No data";
+      }
     } else {
-      li.classList.add("offline");
-      ls.textContent = "No data";
+      // Fallback
+      if (hasRealData && isFresh) {
+        li.classList.remove("offline");
+        ls.textContent = "Live";
+      } else {
+        li.classList.add("offline");
+        ls.textContent = hasRealData ? "Standby" : "No data";
+      }
     }
   }
 
@@ -676,7 +720,8 @@
           renderCorrelations();
           renderAlerts();
           renderLiveStatus();
-          $("footerTs").textContent = "Last updated: " + new Date().toLocaleTimeString();
+          const tsEl = $("footerTs");
+          if (tsEl) tsEl.textContent = "Last updated: " + new Date().toLocaleTimeString();
         }
       }
     }, 5_000);
