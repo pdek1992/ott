@@ -5,6 +5,7 @@
   const SESSION_KEY = "ott-glass-session-v1";
   const MY_LIST_KEY = "ott-glass-my-list-v1";
   const DEVICE_KEY = "ott-glass-device-credential-v1";
+  const WATCH_PROGRESS_KEY = "ott-glass-progress-v1";
 
   const state = {
     currentUser: null,
@@ -26,7 +27,9 @@
     imaReady: false,
     adsLoader: null,
     adsManager: null,
-    installPrompt: null
+    installPrompt: null,
+    assistantVisible: false,
+    lastProgressSavedAt: 0
   };
 
   const els = {};
@@ -37,6 +40,7 @@
     bindElements();
     bindEvents();
     drawIcons();
+    updateShellChrome();
     registerServiceWorker();
     await detectPlaybackDevice();
 
@@ -53,6 +57,7 @@
     const ids = [
       "authScreen",
       "appShell",
+      "topbar",
       "loginForm",
       "loginButton",
       "emailInput",
@@ -63,19 +68,33 @@
       "profileName",
       "logoutButton",
       "searchInput",
+      "voiceSearchButton",
+      "searchSuggestionPanel",
       "heroImage",
       "heroCategory",
       "heroTitle",
       "heroDescription",
       "heroMeta",
+      "heroStatusPill",
+      "heroSupportText",
       "heroPlayButton",
       "heroListButton",
+      "heroResumeButton",
+      "heroMoodChips",
+      "heroFeatureCards",
       "notificationButton",
       "registerDeviceButton",
       "refreshDataButton",
       "deviceStatus",
+      "curatedStrip",
       "rails",
       "my-list",
+      "assistantButton",
+      "assistantBackdrop",
+      "assistantPanel",
+      "assistantCloseButton",
+      "assistantSuggestionList",
+      "assistantPrimaryAction",
       "playerOverlay",
       "closePlayerButton",
       "pipButton",
@@ -90,6 +109,11 @@
       "playerMeta",
       "watchTitle",
       "watchDescription",
+      "watchStats",
+      "sceneMarkers",
+      "upNextTitle",
+      "upNextMeta",
+      "upNextButton",
       "playbackState",
       "protectionState",
       "adStatus",
@@ -106,7 +130,12 @@
     els.logoutButton.addEventListener("click", logout);
     els.searchInput.addEventListener("input", () => {
       state.searchQuery = els.searchInput.value.trim().toLowerCase();
+      renderSearchSuggestions();
       renderRails();
+    });
+    els.searchInput.addEventListener("focus", renderSearchSuggestions);
+    els.voiceSearchButton?.addEventListener("click", () => {
+      setToast("Voice search UI is ready. Hook a speech service to enable it.");
     });
 
     els.heroPlayButton.addEventListener("click", () => {
@@ -120,6 +149,11 @@
         toggleMyList(state.featuredVideo.id);
       }
     });
+    els.heroResumeButton?.addEventListener("click", () => {
+      if (state.featuredVideo) {
+        playVideo(state.featuredVideo, { resume: true });
+      }
+    });
 
     els.closePlayerButton.addEventListener("click", closePlayer);
     els.notificationButton.addEventListener("click", requestNotifications);
@@ -129,16 +163,47 @@
     els.pipButton.addEventListener("click", togglePictureInPicture);
     els.fullscreenButton.addEventListener("click", toggleFullscreen);
     els.installButton.addEventListener("click", installPwa);
+    els.assistantButton?.addEventListener("click", () => setAssistantOpen(true));
+    els.assistantBackdrop?.addEventListener("click", () => setAssistantOpen(false));
+    els.assistantCloseButton?.addEventListener("click", () => setAssistantOpen(false));
+    els.assistantPrimaryAction?.addEventListener("click", handleAssistantPrimaryAction);
+    els.upNextButton?.addEventListener("click", () => {
+      const nextId = els.upNextButton.dataset.videoId;
+      const nextVideo = nextId ? state.catalogById.get(nextId) : getSuggestedNextVideo(state.currentVideo);
+      if (nextVideo) {
+        playVideo(nextVideo);
+      }
+    });
+    document.querySelectorAll("[data-assistant-open='true']").forEach((button) => {
+      button.addEventListener("click", () => setAssistantOpen(true));
+    });
 
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       state.installPrompt = event;
       els.installButton.hidden = false;
     });
+    window.addEventListener("scroll", updateShellChrome, { passive: true });
 
     document.addEventListener("visibilitychange", () => {
       if (document.hidden && state.player) {
         setToast("Playback can continue in the background when your browser allows it.");
+      }
+    });
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".search-cluster")) {
+        hideSearchSuggestions();
+      }
+      if (event.target.closest("[data-scroll-target]")) {
+        const selector = event.target.closest("[data-scroll-target]").dataset.scrollTarget;
+        const target = selector ? document.querySelector(selector) : null;
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        hideSearchSuggestions();
+        setAssistantOpen(false);
       }
     });
   }
@@ -234,6 +299,7 @@
 
   function logout() {
     closePlayer();
+    setAssistantOpen(false);
     localStorage.removeItem(SESSION_KEY);
     state.currentUser = null;
     els.appShell.hidden = true;
@@ -306,8 +372,9 @@
 
   function renderApp() {
     renderHero();
+    renderCuratedStrip();
+    renderAssistantSuggestions();
     renderRails();
-    renderMyList();
   }
 
   function renderHero() {
@@ -319,6 +386,8 @@
     els.heroCategory.textContent = video.category || "Featured";
     els.heroTitle.textContent = video.title;
     els.heroDescription.textContent = video.description;
+    els.heroStatusPill.textContent = buildHeroStatus(video);
+    els.heroSupportText.textContent = buildHeroSupportCopy(video);
     els.heroMeta.innerHTML = "";
 
     for (const value of [video.year, video.duration, video.maturity]) {
@@ -331,6 +400,9 @@
     }
 
     setSmartImage(els.heroImage, thumbnailCandidates(video));
+    renderHeroFeatureCards(video);
+    renderMoodChips(video);
+    updateHeroResumeButton(video);
     updateHeroListButton();
   }
 
@@ -361,10 +433,48 @@
   }
 
   function buildRails() {
-    const configured = (config.rails || []).map((rail) => ({
-      title: rail.title,
-      items: mergeUnique(rail.items || [])
-    }));
+    const configured = [];
+    const seenTitles = new Set();
+
+    const smartRails = [
+      {
+        title: "Continue Watching",
+        items: getContinueWatchingVideos().map((video) => video.id)
+      },
+      {
+        title: `Because You Watched ${getAffinityCategory()}`,
+        items: getBecauseYouWatchedVideos().map((video) => video.id)
+      },
+      {
+        title: `Trending in ${getRegionLabel()}`,
+        items: getTrendingVideos().map((video) => video.id)
+      },
+      {
+        title: "Quick Watch",
+        items: getQuickWatchVideos().map((video) => video.id)
+      }
+    ];
+
+    for (const rail of smartRails) {
+      const title = prettifyRailTitle(rail.title);
+      if (!rail.items.length || seenTitles.has(title.toLowerCase())) {
+        continue;
+      }
+      configured.push({ title, items: mergeUnique(rail.items) });
+      seenTitles.add(title.toLowerCase());
+    }
+
+    for (const rail of config.rails || []) {
+      const title = prettifyRailTitle(rail.title);
+      if (seenTitles.has(title.toLowerCase())) {
+        continue;
+      }
+      configured.push({
+        title,
+        items: mergeUnique(rail.items || [])
+      });
+      seenTitles.add(title.toLowerCase());
+    }
 
     const titles = new Set(configured.map((rail) => rail.title.toLowerCase()));
     const categories = new Map();
@@ -403,7 +513,8 @@
     } else {
       const wrapper = document.createElement("section");
       wrapper.className = "rail";
-      wrapper.innerHTML = '<div class="rail-header"><h2>My List</h2><span>Saved titles appear here</span></div>';
+      wrapper.innerHTML =
+        '<div class="rail-header"><div class="rail-header-copy"><p class="eyebrow">Saved for later</p><h2>My List</h2></div><span>Saved titles appear here</span></div>';
       wrapper.appendChild(createEmptyState("Add a title from the hero or rail."));
       els["my-list"].appendChild(wrapper);
     }
@@ -414,10 +525,17 @@
     section.className = "rail";
     const header = document.createElement("div");
     header.className = "rail-header";
-    header.innerHTML = `<h2>${escapeHtml(title)}</h2><span>${videos.length} titles</span>`;
+    header.innerHTML = `
+      <div class="rail-header-copy">
+        <p class="eyebrow">${escapeHtml(buildRailEyebrow(title))}</p>
+        <h2>${escapeHtml(title)}</h2>
+      </div>
+      <span>${videos.length} picks</span>
+    `;
 
     const track = document.createElement("div");
     track.className = "rail-track";
+    track.setAttribute("aria-label", title);
     for (const video of videos) {
       track.appendChild(createTile(video));
     }
@@ -432,6 +550,10 @@
     tile.type = "button";
     tile.title = `Play ${video.title}`;
     tile.addEventListener("click", () => playVideo(video));
+    tile.setAttribute("aria-label", `Play ${video.title}`);
+
+    const inList = isVideoInMyList(video.id);
+    const progress = readProgressMap()[video.id];
 
     const img = document.createElement("img");
     img.alt = "";
@@ -441,17 +563,49 @@
     const body = document.createElement("span");
     body.className = "tile-body";
     body.innerHTML = `
-      <span class="tile-badges">
-        <span class="badge">${escapeHtml(video.category || "OTT")}</span>
+      <span class="tile-badge-row">
+        <span class="tile-badges">
+          <span class="badge">${escapeHtml(video.category || "OTT")}</span>
+          ${progress ? '<span class="badge is-warm">Resume</span>' : ""}
+        </span>
       </span>
       <span class="tile-title">${escapeHtml(video.title)}</span>
+      <span class="tile-description">${escapeHtml(trimDescription(video.description))}</span>
       <span class="tile-meta">
         ${video.year ? `<span>${escapeHtml(video.year)}</span>` : ""}
         ${video.duration ? `<span>${escapeHtml(video.duration)}</span>` : ""}
+        ${video.maturity ? `<span>${escapeHtml(video.maturity)}</span>` : ""}
       </span>
     `;
 
+    const actions = document.createElement("span");
+    actions.className = "tile-actions";
+    actions.append(
+      createTileAction("play", "Play now", () => playVideo(video)),
+      createTileAction(progress ? "history" : "plus", progress ? "Resume" : "Save", () => {
+        if (progress) {
+          playVideo(video, { resume: true });
+        } else {
+          toggleMyList(video.id);
+        }
+      }, Boolean(progress || inList)),
+      createTileAction("share-2", "Share", () => shareVideo(video))
+    );
+    body.append(actions);
+
     tile.append(img, body);
+
+    if (progress) {
+      const progressBar = document.createElement("span");
+      progressBar.className = "tile-progress";
+      const progressFill = document.createElement("span");
+      const ratio = progress.duration ? Math.min(100, Math.max(4, (progress.position / progress.duration) * 100)) : 8;
+      progressFill.style.setProperty("--progress", `${ratio}%`);
+      progressFill.style.width = `${ratio}%`;
+      progressBar.append(progressFill);
+      tile.append(progressBar);
+    }
+
     return tile;
   }
 
@@ -462,7 +616,7 @@
     return box;
   }
 
-  async function playVideo(video) {
+  async function playVideo(video, options = {}) {
     state.currentVideo = video;
     els.playerOverlay.hidden = false;
     els.playerError.hidden = true;
@@ -476,6 +630,8 @@
     els.videoElement.poster = firstThumbnail(video);
     state.firedAds = new Set();
     state.adCuePoints = (video.adCuePoints || config.adCuePoints || []).map(Number).filter(Number.isFinite);
+    state.lastProgressSavedAt = 0;
+    renderPlayerIntel(video);
 
     // ── Observability: start session ────────────────────────
     if (window.OTT_OBS) window.OTT_OBS.onPlayIntent();
@@ -504,6 +660,9 @@
       state.currentManifestUrl = loadedUrl;
       prepareMediaSession(video);
       prepareIma();
+      if (options.resume) {
+        seekToStoredProgress(video);
+      }
       await els.videoElement.play().catch(() => undefined);
       setToast(`Playing ${video.title}`, "success");
     } catch (error) {
@@ -594,6 +753,8 @@
       });
       els.videoElement.addEventListener("timeupdate", (event) => {
         handleCuePoints();
+        savePlaybackProgress();
+        updateSceneMarkerState();
         // Sample bandwidth estimate + dropped frames
         if (window.OTT_OBS) {
           const stats = state.player.getStats ? state.player.getStats() : null;
@@ -605,6 +766,8 @@
       });
       els.videoElement.addEventListener("ended", () => {
         els.adStatus.textContent = "Complete";
+        clearPlaybackProgress(state.currentVideo?.id);
+        updateHeroResumeButton(state.featuredVideo);
         if (window.OTT_OBS) window.OTT_OBS.onVideoEnd();
       });
 
@@ -960,6 +1123,7 @@
     clearInterval(state.adTimer);
     state.adPlaying = false;
     els.adOverlay.hidden = true;
+    savePlaybackProgress(true);
 
     // ── Observability: flush session on close ───────────────
     if (window.OTT_OBS) await window.OTT_OBS.onVideoEnd().catch(() => undefined);
@@ -1119,29 +1283,29 @@
   async function detectPlaybackDevice() {
     const parts = [];
     if (window.shaka) {
-      parts.push("Ready");
+      parts.push("Shaka");
     }
 
     if (navigator.requestMediaKeySystemAccess) {
       const clearKey = await supportsKeySystem("org.w3.clearkey");
       const widevine = await supportsKeySystem("com.widevine.alpha");
       if (clearKey) {
-        parts.push("Ready");
+        parts.push("ClearKey");
       }
       if (widevine) {
-        parts.push("Ready");
+        parts.push("Widevine");
       }
       if (widevine && /Android/i.test(navigator.userAgent)) {
-        parts.push("Ready");
+        parts.push("Mobile DRM");
       }
     }
 
     if (!parts.length) {
-      parts.push("Ready");
+      parts.push("Playback ready");
     }
 
     if (els.deviceStatus) {
-      els.deviceStatus.textContent = mergeUnique(parts).join(" | ");
+      // els.deviceStatus.textContent = mergeUnique(parts).join(" | ");
     }
   }
 
@@ -1201,8 +1365,7 @@
     if (!state.currentVideo || !state.catalog.length) {
       return;
     }
-    const index = state.catalog.findIndex((video) => video.id === state.currentVideo.id);
-    const next = state.catalog[(index + direction + state.catalog.length) % state.catalog.length];
+    const next = getSuggestedNextVideo(state.currentVideo, direction);
     if (next) {
       playVideo(next);
     }
@@ -1213,8 +1376,7 @@
     const exists = ids.includes(videoId);
     const next = exists ? ids.filter((id) => id !== videoId) : [videoId, ...ids];
     localStorage.setItem(MY_LIST_KEY, JSON.stringify(next));
-    updateHeroListButton();
-    renderMyList();
+    renderApp();
     setToast(exists ? "Removed from My List." : "Added to My List.", exists ? "" : "success");
   }
 
@@ -1228,6 +1390,651 @@
       ? '<i data-lucide="check" aria-hidden="true"></i> In My List'
       : '<i data-lucide="plus" aria-hidden="true"></i> My List';
     drawIcons();
+  }
+
+  function renderHeroFeatureCards(video) {
+    if (!els.heroFeatureCards) {
+      return;
+    }
+
+    const continueVideo = getContinueWatchingVideos()[0];
+    const becauseVideo = getBecauseYouWatchedVideos(video).find((item) => item.id !== video.id);
+    const continueProgress = continueVideo ? readProgressMap()[continueVideo.id] : null;
+
+    const cards = [
+      continueVideo
+        ? {
+            variant: "accent",
+            tag: "Continue",
+            title: continueVideo.title,
+            copy: `Resume from ${formatClock(continueProgress?.position || 0)} with your last position saved locally.`,
+            action: { label: "Resume", icon: "history", handler: () => playVideo(continueVideo, { resume: true }) }
+          }
+        : {
+            variant: "accent",
+            tag: "Start fast",
+            title: "Quick night mode",
+            copy: "Jump straight into a short watch rail built from the existing library.",
+            action: { label: "Open Quick Watch", icon: "zap", handler: () => scrollToRail("Quick Watch") }
+          },
+      becauseVideo
+        ? {
+            variant: "warm",
+            tag: "Because you watched",
+            title: becauseVideo.title,
+            copy: `A nearby ${becauseVideo.category.toLowerCase()} pick that fits your recent viewing lane.`,
+            action: { label: "Play next", icon: "sparkles", handler: () => playVideo(becauseVideo) }
+          }
+        : {
+            variant: "",
+            tag: "Discovery",
+            title: `Trending in ${getRegionLabel()}`,
+            copy: "Region-aware presentation on top of the current catalog and rail structure.",
+            action: { label: "Browse trending", icon: "globe-2", handler: () => scrollToRail(`Trending in ${getRegionLabel()}`) }
+          }
+    ];
+
+    els.heroFeatureCards.innerHTML = "";
+    for (const card of cards) {
+      const article = document.createElement("article");
+      article.className = `feature-card ${card.variant ? `hero-card--${card.variant}` : ""}`.trim();
+      article.innerHTML = `
+        <div class="feature-card-top">
+          <span>${escapeHtml(card.tag)}</span>
+          <i data-lucide="sparkles" aria-hidden="true"></i>
+        </div>
+        <h3>${escapeHtml(card.title)}</h3>
+        <p>${escapeHtml(card.copy)}</p>
+      `;
+
+      if (card.action) {
+        const button = document.createElement("button");
+        button.className = "ghost-btn";
+        button.type = "button";
+        button.innerHTML = `<i data-lucide="${card.action.icon}" aria-hidden="true"></i>${escapeHtml(card.action.label)}`;
+        button.addEventListener("click", card.action.handler);
+        article.append(button);
+      }
+
+      els.heroFeatureCards.append(article);
+    }
+    drawIcons();
+  }
+
+  function renderMoodChips(video) {
+    if (!els.heroMoodChips) {
+      return;
+    }
+
+    const chipDefs = [
+      { label: "Quick watch", action: () => scrollToRail("Quick Watch") },
+      { label: video.category || "Featured", action: () => applySearchQuery(video.category || "") },
+      { label: "Animation", action: () => applySearchQuery("animation") },
+      { label: "Documentary", action: () => applySearchQuery("documentary") },
+      { label: "Sci-Fi", action: () => applySearchQuery("sci-fi") }
+    ];
+
+    els.heroMoodChips.innerHTML = "";
+    for (const chip of chipDefs) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "mood-chip";
+      button.textContent = chip.label;
+      button.addEventListener("click", chip.action);
+      els.heroMoodChips.append(button);
+    }
+  }
+
+  function renderCuratedStrip() {
+    if (!els.curatedStrip) {
+      return;
+    }
+
+    const chips = [
+      { label: "Continue Watching", action: () => scrollToRail("Continue Watching") },
+      { label: `Because You Watched ${getAffinityCategory()}`, action: () => scrollToRail(`Because You Watched ${getAffinityCategory()}`) },
+      { label: "Short on time", action: () => scrollToRail("Quick Watch") },
+      { label: `Trending in ${getRegionLabel()}`, action: () => scrollToRail(`Trending in ${getRegionLabel()}`) },
+      { label: "Open My List", action: () => document.getElementById("my-list")?.scrollIntoView({ behavior: "smooth", block: "start" }) }
+    ];
+
+    els.curatedStrip.innerHTML = "";
+    for (const chip of chips) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "curation-chip";
+      button.textContent = chip.label;
+      button.addEventListener("click", chip.action);
+      els.curatedStrip.append(button);
+    }
+  }
+
+  function renderSearchSuggestions() {
+    if (!els.searchSuggestionPanel) {
+      return;
+    }
+
+    const query = state.searchQuery;
+    const suggestions = [];
+
+    if (query) {
+      for (const video of state.catalog.filter(matchesSearch).slice(0, 5)) {
+        suggestions.push({
+          title: video.title,
+          meta: [video.category, video.year, video.duration].filter(Boolean).join(" • "),
+          handler: () => playVideo(video, { resume: Boolean(readProgressMap()[video.id]) })
+        });
+      }
+    } else {
+      const resumeVideo = getContinueWatchingVideos()[0];
+      if (resumeVideo) {
+        suggestions.push({
+          title: `Resume ${resumeVideo.title}`,
+          meta: `Saved at ${formatClock(readProgressMap()[resumeVideo.id]?.position || 0)}`,
+          handler: () => playVideo(resumeVideo, { resume: true })
+        });
+      }
+
+      suggestions.push(
+        {
+          title: `Browse ${getAffinityCategory()}`,
+          meta: "Use your strongest viewing lane as a shortcut.",
+          handler: () => applySearchQuery(getAffinityCategory())
+        },
+        {
+          title: "Short picks under 15 minutes",
+          meta: "Instant-watch rail for low-friction starts.",
+          handler: () => scrollToRail("Quick Watch")
+        },
+        {
+          title: `Trending in ${getRegionLabel()}`,
+          meta: "Localized presentation layer built from the current catalog.",
+          handler: () => scrollToRail(`Trending in ${getRegionLabel()}`)
+        }
+      );
+    }
+
+    els.searchSuggestionPanel.innerHTML = "";
+    if (!suggestions.length) {
+      hideSearchSuggestions();
+      return;
+    }
+
+    const list = document.createElement("div");
+    list.className = "search-suggestion-list";
+
+    for (const suggestion of suggestions.slice(0, 5)) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "search-suggestion-item";
+      button.innerHTML = `<strong>${escapeHtml(suggestion.title)}</strong><span>${escapeHtml(suggestion.meta)}</span>`;
+      button.addEventListener("click", () => {
+        hideSearchSuggestions();
+        suggestion.handler();
+      });
+      list.append(button);
+    }
+
+    els.searchSuggestionPanel.append(list);
+    els.searchSuggestionPanel.hidden = false;
+  }
+
+  function hideSearchSuggestions() {
+    if (els.searchSuggestionPanel) {
+      els.searchSuggestionPanel.hidden = true;
+      els.searchSuggestionPanel.innerHTML = "";
+    }
+  }
+
+  function renderAssistantSuggestions() {
+    if (!els.assistantSuggestionList) {
+      return;
+    }
+
+    const continueVideo = getContinueWatchingVideos()[0];
+    const becauseVideo = getBecauseYouWatchedVideos()[0];
+    const quickVideo = getQuickWatchVideos()[0];
+    const myListVideo = (readJson(MY_LIST_KEY) || []).map((id) => state.catalogById.get(id)).find(Boolean);
+
+    const suggestions = [
+      continueVideo && {
+        title: `Resume ${continueVideo.title}`,
+        meta: `Jump back in at ${formatClock(readProgressMap()[continueVideo.id]?.position || 0)}.`,
+        handler: () => playVideo(continueVideo, { resume: true })
+      },
+      becauseVideo && {
+        title: `Stay in ${becauseVideo.category}`,
+        meta: `Play ${becauseVideo.title} as the next likely fit.`,
+        handler: () => playVideo(becauseVideo)
+      },
+      quickVideo && {
+        title: "Find something short",
+        meta: `${quickVideo.title} anchors the quick-watch lane.`,
+        handler: () => scrollToRail("Quick Watch")
+      },
+      myListVideo && {
+        title: "Open your saved list",
+        meta: `${myListVideo.title} and your other picks are ready.`,
+        handler: () => document.getElementById("my-list")?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }
+    ].filter(Boolean);
+
+    els.assistantSuggestionList.innerHTML = "";
+
+    for (const suggestion of suggestions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "assistant-suggestion-item";
+      button.innerHTML = `<strong>${escapeHtml(suggestion.title)}</strong><span>${escapeHtml(suggestion.meta)}</span>`;
+      button.addEventListener("click", () => {
+        setAssistantOpen(false);
+        suggestion.handler();
+      });
+      els.assistantSuggestionList.append(button);
+    }
+  }
+
+  function handleAssistantPrimaryAction() {
+    const options = [
+      getBecauseYouWatchedVideos()[0],
+      getTrendingVideos()[0],
+      getQuickWatchVideos()[0],
+      state.featuredVideo
+    ].filter(Boolean);
+
+    if (!options.length) {
+      setToast("No surprise pick is ready yet.");
+      return;
+    }
+
+    const surprise = options[Math.floor(Math.random() * options.length)];
+    setAssistantOpen(false);
+    playVideo(surprise, { resume: Boolean(readProgressMap()[surprise.id]) });
+  }
+
+  function setAssistantOpen(open) {
+    if (!els.assistantPanel || !els.assistantBackdrop) {
+      return;
+    }
+
+    state.assistantVisible = open;
+
+    if (open) {
+      els.assistantBackdrop.hidden = false;
+      els.assistantPanel.hidden = false;
+      document.body.classList.add("assistant-open");
+      requestAnimationFrame(() => {
+        els.assistantPanel.classList.add("is-open");
+      });
+      return;
+    }
+
+    els.assistantPanel.classList.remove("is-open");
+    document.body.classList.remove("assistant-open");
+    els.assistantBackdrop.hidden = true;
+    window.setTimeout(() => {
+      if (!state.assistantVisible) {
+        els.assistantPanel.hidden = true;
+      }
+    }, 220);
+  }
+
+  function renderPlayerIntel(video) {
+    if (!video) {
+      return;
+    }
+
+    const progress = readProgressMap()[video.id];
+    const nextVideo = getSuggestedNextVideo(video);
+    const stats = [
+      ["Category", video.category || "Featured"],
+      ["Runtime", video.duration || "Adaptive"],
+      ["Resume", progress ? formatClock(progress.position) : "Fresh start"],
+      ["Playback", els.deviceStatus?.textContent || "Ready"]
+    ];
+
+    if (els.watchStats) {
+      els.watchStats.innerHTML = "";
+      for (const [label, value] of stats) {
+        const row = document.createElement("div");
+        row.innerHTML = `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`;
+        els.watchStats.append(row);
+      }
+    }
+
+    if (els.sceneMarkers) {
+      els.sceneMarkers.innerHTML = "";
+      for (const marker of getSceneMarkers(video)) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "scene-marker";
+        button.dataset.time = String(marker.time);
+        button.textContent = marker.label;
+        button.addEventListener("click", () => seekBy(marker.time - (els.videoElement.currentTime || 0)));
+        els.sceneMarkers.append(button);
+      }
+    }
+
+    if (els.upNextTitle && els.upNextMeta && els.upNextButton) {
+      els.upNextTitle.textContent = nextVideo?.title || "No next title ready";
+      els.upNextMeta.textContent = nextVideo
+        ? [nextVideo.category, nextVideo.duration, nextVideo.year].filter(Boolean).join(" • ")
+        : "Your next recommendation will appear here.";
+      els.upNextButton.dataset.videoId = nextVideo?.id || "";
+      els.upNextButton.hidden = !nextVideo;
+    }
+  }
+
+  function updateSceneMarkerState() {
+    if (!els.sceneMarkers) {
+      return;
+    }
+    const current = els.videoElement.currentTime || 0;
+    els.sceneMarkers.querySelectorAll(".scene-marker").forEach((marker) => {
+      const time = Number(marker.dataset.time || 0);
+      marker.classList.toggle("is-active", current >= time && current < time + 60);
+    });
+  }
+
+  function createTileAction(icon, label, onClick, isActive = false) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `tile-action ${isActive ? "is-active" : ""}`.trim();
+    button.setAttribute("aria-label", label);
+    button.innerHTML = `<i data-lucide="${icon}" aria-hidden="true"></i>`;
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      onClick();
+    });
+    return button;
+  }
+
+  function shareVideo(video) {
+    const shareData = {
+      title: video.title,
+      text: `${video.title} on ${config.appName || "VigilSiddhi OTT"}`,
+      url: `${location.origin}${location.pathname}#home`
+    };
+
+    if (navigator.share) {
+      navigator.share(shareData).catch(() => undefined);
+      return;
+    }
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`).catch(() => undefined);
+      setToast("Link copied for sharing.", "success");
+      return;
+    }
+
+    setToast("Sharing is not available in this browser.");
+  }
+
+  function applySearchQuery(query) {
+    const value = String(query || "");
+    els.searchInput.value = value;
+    state.searchQuery = value.trim().toLowerCase();
+    hideSearchSuggestions();
+    renderRails();
+    document.getElementById("rails")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function scrollToRail(title) {
+    const normalized = prettifyRailTitle(title).toLowerCase();
+    const rail = Array.from(document.querySelectorAll(".rail")).find((element) => {
+      const heading = element.querySelector("h2");
+      return heading && heading.textContent.trim().toLowerCase() === normalized;
+    });
+    rail?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function buildHeroStatus(video) {
+    if (readProgressMap()[video.id]) {
+      return "Resume ready";
+    }
+    if (isVideoInMyList(video.id)) {
+      return "Saved by you";
+    }
+    return getContinueWatchingVideos().length ? "Tailored for tonight" : "Featured now";
+  }
+
+  function buildHeroSupportCopy(video) {
+    return `${state.catalog.length} titles are available right now, with discovery grouped around ${getAffinityCategory().toLowerCase()} viewing and regional momentum in ${getRegionLabel()}.`;
+  }
+
+  function updateHeroResumeButton(video) {
+    if (!els.heroResumeButton || !video) {
+      return;
+    }
+
+    const progress = readProgressMap()[video.id];
+    if (!progress || progress.position < 25) {
+      els.heroResumeButton.hidden = true;
+      return;
+    }
+
+    els.heroResumeButton.hidden = false;
+    els.heroResumeButton.innerHTML = `<i data-lucide="history" aria-hidden="true"></i>Resume ${formatClock(progress.position)}`;
+    drawIcons();
+  }
+
+  function savePlaybackProgress(force = false) {
+    if (!state.currentVideo || !els.videoElement) {
+      return;
+    }
+
+    if (!force && Date.now() - state.lastProgressSavedAt < 5000) {
+      return;
+    }
+
+    const duration = Number.isFinite(els.videoElement.duration) ? els.videoElement.duration : 0;
+    const position = els.videoElement.currentTime || 0;
+    if (!duration || position < 5) {
+      return;
+    }
+
+    const progressMap = readProgressMap();
+    if (position >= duration - 10) {
+      delete progressMap[state.currentVideo.id];
+    } else if (position > 25 || force) {
+      progressMap[state.currentVideo.id] = {
+        position,
+        duration,
+        updatedAt: Date.now()
+      };
+    }
+
+    localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(progressMap));
+    state.lastProgressSavedAt = Date.now();
+    if (state.featuredVideo) {
+      updateHeroResumeButton(state.featuredVideo);
+    }
+  }
+
+  function clearPlaybackProgress(videoId) {
+    if (!videoId) {
+      return;
+    }
+    const progressMap = readProgressMap();
+    delete progressMap[videoId];
+    localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(progressMap));
+  }
+
+  function readProgressMap() {
+    return readJson(WATCH_PROGRESS_KEY) || {};
+  }
+
+  function seekToStoredProgress(video) {
+    const saved = readProgressMap()[video.id];
+    if (!saved?.position) {
+      return;
+    }
+    const upperBound = Number(saved.duration) > 12 ? saved.duration - 6 : saved.position;
+    const safeTarget = Math.max(0, Math.min(saved.position, upperBound));
+    els.videoElement.currentTime = safeTarget;
+  }
+
+  function getContinueWatchingVideos() {
+    const progressMap = readProgressMap();
+    return Object.entries(progressMap)
+      .map(([id, progress]) => ({ video: state.catalogById.get(id), updatedAt: progress.updatedAt || 0 }))
+      .filter((item) => item.video)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .map((item) => item.video);
+  }
+
+  function getQuickWatchVideos() {
+    return state.catalog
+      .filter((video) => {
+        const minutes = durationToMinutes(video.duration);
+        return minutes > 0 && minutes <= 15;
+      })
+      .slice(0, 8);
+  }
+
+  function getAffinityCategory() {
+    const affinityVideo =
+      getContinueWatchingVideos()[0] ||
+      (readJson(MY_LIST_KEY) || []).map((id) => state.catalogById.get(id)).find(Boolean) ||
+      state.featuredVideo ||
+      state.catalog[0];
+    return affinityVideo?.category || "Featured";
+  }
+
+  function getBecauseYouWatchedVideos(seedVideo = null) {
+    const category = seedVideo?.category || getAffinityCategory();
+    return state.catalog
+      .filter((video) => video.category === category && video.id !== seedVideo?.id)
+      .slice(0, 8);
+  }
+
+  function getTrendingVideos() {
+    const configuredTrending = (config.rails || []).find((rail) => /trending/i.test(prettifyRailTitle(rail.title)));
+    if (configuredTrending?.items?.length) {
+      return configuredTrending.items
+        .map((id) => state.catalogById.get(id))
+        .filter(Boolean)
+        .slice(0, 8);
+    }
+    return state.catalog.slice(0, 8);
+  }
+
+  function getSuggestedNextVideo(currentVideo, direction = 1) {
+    if (!currentVideo || !state.catalog.length) {
+      return null;
+    }
+
+    if (direction === 1) {
+      const sibling = state.catalog.find((video) => video.id !== currentVideo.id && video.category === currentVideo.category);
+      if (sibling) {
+        return sibling;
+      }
+    }
+
+    const index = state.catalog.findIndex((video) => video.id === currentVideo.id);
+    if (index === -1) {
+      return state.catalog[0] || null;
+    }
+
+    return state.catalog[(index + direction + state.catalog.length) % state.catalog.length] || null;
+  }
+
+  function getSceneMarkers(video) {
+    const duration = Number.isFinite(els.videoElement.duration) && els.videoElement.duration > 0
+      ? els.videoElement.duration
+      : durationToSeconds(video.duration) || 600;
+    return [
+      { label: "Intro", time: Math.max(0, duration * 0.06) },
+      { label: "Highlight", time: Math.max(10, duration * 0.38) },
+      { label: "Finale", time: Math.max(20, duration * 0.78) }
+    ];
+  }
+
+  function getRegionLabel() {
+    const region = String(navigator.language || "en-US").split("-")[1] || "US";
+    const labels = {
+      IN: "India",
+      US: "the US",
+      GB: "the UK",
+      CA: "Canada",
+      AU: "Australia"
+    };
+    return labels[region.toUpperCase()] || "your region";
+  }
+
+  function prettifyRailTitle(title) {
+    const raw = String(title || "").trim();
+    if (/continue/i.test(raw)) return "Continue Watching";
+    if (/quick/i.test(raw)) return "Quick Watch";
+    if (/trending/i.test(raw)) return raw.includes("in ") ? raw : "Trending Now";
+    if (/new/i.test(raw) && /hot/i.test(raw)) return "New & Hot";
+    return raw
+      .replace(/^[^\p{L}\p{N}]+/gu, "")
+      .replace(/\s+/g, " ")
+      .trim() || "Browse";
+  }
+
+  function buildRailEyebrow(title) {
+    const safeTitle = String(title || "");
+    if (/continue/i.test(safeTitle)) return "Resume ready";
+    if (/because/i.test(safeTitle)) return "Personalized";
+    if (/trending/i.test(safeTitle)) return "Regional momentum";
+    if (/quick/i.test(safeTitle)) return "Fast starts";
+    if (/list/i.test(safeTitle)) return "Saved by you";
+    return "Curated rail";
+  }
+
+  function updateShellChrome() {
+    els.topbar?.classList.toggle("is-scrolled", window.scrollY > 16);
+  }
+
+  function isVideoInMyList(videoId) {
+    return (readJson(MY_LIST_KEY) || []).includes(videoId);
+  }
+
+  function trimDescription(text) {
+    const safe = String(text || "").trim();
+    if (safe.length <= 88) {
+      return safe;
+    }
+    return `${safe.slice(0, 85).trimEnd()}...`;
+  }
+
+  function durationToMinutes(value) {
+    const text = String(value || "").toLowerCase();
+    if (!text) return 0;
+    let minutes = 0;
+    const hoursMatch = text.match(/(\d+)\s*h/);
+    const minutesMatch = text.match(/(\d+)\s*m/);
+    const secondsMatch = text.match(/(\d+)\s*s/);
+    if (hoursMatch) minutes += Number(hoursMatch[1]) * 60;
+    if (minutesMatch) minutes += Number(minutesMatch[1]);
+    if (!hoursMatch && !minutesMatch && /^\d+$/.test(text)) minutes = Number(text);
+    if (!minutes && secondsMatch) minutes = Math.max(1, Math.round(Number(secondsMatch[1]) / 60));
+    return minutes;
+  }
+
+  function durationToSeconds(value) {
+    const text = String(value || "").toLowerCase();
+    if (!text) return 0;
+    let seconds = 0;
+    const hoursMatch = text.match(/(\d+)\s*h/);
+    const minutesMatch = text.match(/(\d+)\s*m/);
+    const secondsMatch = text.match(/(\d+)\s*s/);
+    if (hoursMatch) seconds += Number(hoursMatch[1]) * 3600;
+    if (minutesMatch) seconds += Number(minutesMatch[1]) * 60;
+    if (secondsMatch) seconds += Number(secondsMatch[1]);
+    return seconds;
+  }
+
+  function formatClock(seconds) {
+    const safe = Math.max(0, Math.floor(Number(seconds) || 0));
+    const hours = Math.floor(safe / 3600);
+    const minutes = Math.floor((safe % 3600) / 60);
+    const secs = safe % 60;
+    return hours
+      ? `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+      : `${minutes}:${String(secs).padStart(2, "0")}`;
   }
 
   function thumbnailCandidates(video) {
