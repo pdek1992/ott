@@ -27,7 +27,7 @@ window.OTT_CONFIG = {
   thumbnailFileNames: ["thumbnail.webp", "thumbnail.jpg", "thumbnail.jpeg", "thumbnail.png"],
 
   // Master passphrase (loaded from secrets.js)
-  fixedKeyPassphrase: (window.OTT_SECRETS && window.OTT_SECRETS.fixedKeyPassphrase) || "REPLACE_ME",
+  fixedKeyPassphrase: "VIGIL_SIDDHI_PROD_2026",
 
   // Advertising configuration
   googleImaAdTag: "",
@@ -49,7 +49,7 @@ window.OTT_CONFIG = {
       category: "Featured",
       year: "2026",
       duration: "2m",
-      thumbnail: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=640&q=80"
+      thumbnail: "./assets/thumbnails/free.jpg"
     },
     {
       id: "output_2min",
@@ -58,7 +58,7 @@ window.OTT_CONFIG = {
       category: "Featured",
       year: "2026",
       duration: "2m",
-      thumbnail: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=640&q=80"
+      thumbnail: "./assets/thumbnails/output_2min.jpg"
     },
     {
       id: "output_02_04",
@@ -67,7 +67,7 @@ window.OTT_CONFIG = {
       category: "Featured",
       year: "2026",
       duration: "Preview",
-      thumbnail: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=640&q=80"
+      thumbnail: "./assets/thumbnails/output_02_04.jpg"
     },
     {
       id: "withlogo",
@@ -76,7 +76,7 @@ window.OTT_CONFIG = {
       category: "Featured",
       year: "2026",
       duration: "Preview",
-      thumbnail: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=640&q=80"
+      thumbnail: "./assets/thumbnails/withlogo.jpg"
     },
     // ── Sci-Fi ──────────────────────────────────────────────────
     {
@@ -87,7 +87,7 @@ window.OTT_CONFIG = {
       year: "2016",
       duration: "4m",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=640&q=80"
+      thumbnail: "./assets/thumbnails/angel_one.png"
     },
     {
       id: "tears_of_steel",
@@ -97,7 +97,7 @@ window.OTT_CONFIG = {
       year: "2012",
       duration: "12m",
       maturity: "U/A",
-      thumbnail: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=640&q=80"
+      thumbnail: "./assets/thumbnails/tears_of_steel.jpg"
     },
     // ── Documentary ─────────────────────────────────────────────
     {
@@ -108,7 +108,7 @@ window.OTT_CONFIG = {
       year: "2017",
       duration: "3m",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=640&q=80"
+      thumbnail: "./assets/thumbnails/heliocentrism.jpg"
     },
     // ── Animation ───────────────────────────────────────────────
     {
@@ -119,7 +119,7 @@ window.OTT_CONFIG = {
       year: "2008",
       duration: "9m 56s",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=640&q=80"
+      thumbnail: "./assets/thumbnails/big_buck_bunny.jpg"
     },
     {
       id: "bbb_dark_truths",
@@ -129,7 +129,7 @@ window.OTT_CONFIG = {
       year: "2012",
       duration: "10m",
       maturity: "U/A",
-      thumbnail: "https://images.unsplash.com/photo-1541562232579-512a21360020?w=640&q=80"
+      thumbnail: "./assets/thumbnails/bbb_dark_truths.jpg"
     },
     {
       id: "sintel",
@@ -139,7 +139,7 @@ window.OTT_CONFIG = {
       year: "2010",
       duration: "14m 48s",
       maturity: "PG",
-      thumbnail: "https://images.unsplash.com/photo-1628155930542-3c7a64e2aed1?w=640&q=80"
+      thumbnail: "./assets/thumbnails/sintel.png"
     },
     {
       id: "elephant_dream",
@@ -149,7 +149,7 @@ window.OTT_CONFIG = {
       year: "2006",
       duration: "10m 54s",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1557990010-6e3c65a7d8c7?w=640&q=80"
+      thumbnail: "./assets/thumbnails/elephant_dream.png"
     },
     {
       id: "cosmos_laundromat",
@@ -159,7 +159,7 @@ window.OTT_CONFIG = {
       year: "2015",
       duration: "12m 10s",
       maturity: "U/A",
-      thumbnail: "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=640&q=80"
+      thumbnail: "./assets/thumbnails/cosmos_laundromat.jpg"
     },
     // ── Comedy ──────────────────────────────────────────────────
     {
@@ -169,7 +169,7 @@ window.OTT_CONFIG = {
       category: "Comedy",
       year: "2008",
       duration: "22m",
-      thumbnail: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Cast-of-Taarak-Mehta-Ka-Ooltah-Chashmah-celebrate-the-12-year-anniversary-of-the-show.jpg"
+      thumbnail: "./assets/thumbnails/tmkoc.jpg"
     },
     {
       id: "blackmail",
@@ -178,7 +178,7 @@ window.OTT_CONFIG = {
       category: "Comedy",
       year: "2018",
       duration: "1h 54m",
-      thumbnail: "https://images.unsplash.com/photo-1572177812156-58036aae439c?w=640&q=80"
+      thumbnail: "./assets/thumbnails/blackmail.jpg"
     },
     // ── Sports ──────────────────────────────────────────────────
     {
@@ -188,7 +188,7 @@ window.OTT_CONFIG = {
       category: "Sports",
       year: "2026",
       duration: "2h 15m",
-      thumbnail: "https://upload.wikimedia.org/wikipedia/commons/8/89/Test_Match_Cricket_India_Vs._Pakistan.jpg"
+      thumbnail: "./assets/thumbnails/asiacup.jpg"
     },
     // ── DASH Demo ────────────────────────────────────────────────
     {
@@ -199,7 +199,7 @@ window.OTT_CONFIG = {
       year: "2024",
       duration: "LIVE",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=640&q=80"
+      thumbnail: "./assets/thumbnails/dash_if_livesim.jpg"
     },
     {
       id: "multirate_dash",
@@ -209,7 +209,7 @@ window.OTT_CONFIG = {
       year: "2023",
       duration: "ABR",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=640&q=80"
+      thumbnail: "./assets/thumbnails/multirate_dash.jpg"
     },
     {
       id: "hd_multireso",
@@ -219,7 +219,7 @@ window.OTT_CONFIG = {
       year: "2023",
       duration: "HD",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1536240478700-b869ad10e128?w=640&q=80"
+      thumbnail: "./assets/thumbnails/hd_multireso.png"
     },
     {
       id: "bitmovin_demo",
@@ -229,7 +229,7 @@ window.OTT_CONFIG = {
       year: "2023",
       duration: "Feature",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=640&q=80"
+      thumbnail: "./assets/thumbnails/bitmovin_demo.jpg"
     },
     {
       id: "bbb_itec",
@@ -239,7 +239,7 @@ window.OTT_CONFIG = {
       year: "2014",
       duration: "10m",
       maturity: "U",
-      thumbnail: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=640&q=80"
+      thumbnail: "./assets/thumbnails/bbb_itec.jpg"
     }
   ],
 
