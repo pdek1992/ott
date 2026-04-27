@@ -10,9 +10,22 @@
 }
 
 @media (max-width: 768px) {
-  /* ── Layout Fixes ────────────────────────── */
   .mobile-view .app-shell {
     padding-bottom: 70px; /* Space for bottom dock */
+  }
+
+  .mobile-view .auth-screen {
+    display: flex;
+    flex-direction: row;
+    padding: 16px;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .mobile-view .auth-showcase,
+  .mobile-view .login-panel {
+    flex: 1;
+    min-height: auto;
   }
 
   .mobile-view .topbar {
@@ -130,6 +143,13 @@
   .mobile-view .tile-badges,
   .mobile-view .tile-actions button:not(.tile-action-play) {
     display: none !important;
+  }
+
+  .mobile-view .tile-body {
+    display: flex !important;
+    opacity: 1 !important;
+    transform: none !important;
+    padding: 8px !important;
   }
 
   .mobile-view .tile-action-play {

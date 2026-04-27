@@ -45,26 +45,26 @@
 
   // --- MOBILE GESTURES ---
   let lastTap = 0;
+  let tapTimeout = null;
   function initMobileGestures() {
     const videoContainer = document.getElementById('videoContainer');
     if (!videoContainer) return;
 
     videoContainer.addEventListener('touchstart', function (e) {
+      if (e.target.closest('button') || e.target.closest('input')) return;
       const now = Date.now();
       const DOUBLE_TAP_THRESHOLD = 300;
       
       if (now - lastTap < DOUBLE_TAP_THRESHOLD) {
-        // Double tap detected
+        clearTimeout(tapTimeout);
         handleDoubleTap(e, videoContainer);
+        lastTap = 0;
       } else {
-        // Single tap? Wait a bit to see if it's a double tap
-        setTimeout(() => {
-          if (Date.now() - lastTap >= DOUBLE_TAP_THRESHOLD) {
-            handleSingleTap();
-          }
+        lastTap = now;
+        tapTimeout = setTimeout(() => {
+          handleSingleTap();
         }, DOUBLE_TAP_THRESHOLD);
       }
-      lastTap = now;
     });
   }
 
@@ -72,7 +72,7 @@
     const video = document.getElementById('videoElement');
     if (!video) return;
     if (video.paused) {
-      video.play();
+      video.play().catch(() => {});
     } else {
       video.pause();
     }

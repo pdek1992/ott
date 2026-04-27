@@ -9,8 +9,8 @@
   --stroke-strong: rgba(109, 146, 178, 0.42);
   --text: #f6fbff;
   --text-soft: #d8e7f2;
-  --muted: #93a6bb;
-  --muted-strong: #aac0d6;
+  --muted: #b0c4d8;
+  --muted-strong: #cfdee9;
   --primary: #3ce6dc;
   --primary-strong: #7df8ef;
   --secondary: #ff8a3d;
@@ -852,9 +852,16 @@ img {
   font-size: 0.96rem;
 }
 
-.curated-strip {
+.curated-strip,
+.filter-strip {
   padding: 0 clamp(1rem, 4vw, 4rem);
   margin-bottom: 1.4rem;
+}
+
+.filter-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .curation-chip {
@@ -1051,6 +1058,15 @@ img {
   align-content: end;
   gap: 0.72rem;
   padding: 18px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 240ms ease, transform 240ms ease;
+}
+
+.tile:hover .tile-body,
+.tile:focus-visible .tile-body {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .tile-badge-row {
@@ -1288,6 +1304,7 @@ img {
 }
 
 .video-container {
+  grid-column: 1;
   position: relative;
   min-height: 0;
   overflow: hidden;
@@ -1306,6 +1323,7 @@ img {
 }
 
 .watch-panel {
+  grid-column: 2;
   min-height: 0;
   display: grid;
   gap: 1rem;
@@ -1505,6 +1523,11 @@ img {
   .player-grid,
   .intelligence-grid {
     grid-template-columns: 1fr;
+  }
+
+  .video-container,
+  .watch-panel {
+    grid-column: auto;
   }
 
   .hero-sidecars {
