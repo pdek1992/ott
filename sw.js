@@ -1,4 +1,4 @@
-const CACHE_NAME = "ott-glass-shell-v3";
+const CACHE_NAME = "ott-glass-shell-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -50,11 +50,26 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const isMetadata = requestUrl.pathname.includes("/keys/") || requestUrl.pathname.endsWith(".json") || requestUrl.pathname.endsWith("config.js");
+
+  if (isMetadata) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
+      if (cached) return cached;
       return fetch(event.request).then((response) => {
         if (response.ok) {
           const copy = response.clone();
