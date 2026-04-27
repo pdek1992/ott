@@ -386,3 +386,7 @@
   .dash-title  { display: none; }
   .kpi-value   { font-size: 1.25rem; }
 }
+
+.grafana-info-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.info-tag { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: var(--muted); border: 1px solid rgba(157,230,255,0.1); }
+.info-tag i { color: var(--accent); }
