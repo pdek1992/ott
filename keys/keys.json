@@ -22,5 +22,49 @@
   "withlogo": {
     "key_id": "ed0102030405060708090a0b0c0d0e0f",
     "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "countryside_meadow": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "forest_waterfall": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "mountain_highway": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "pexels_cityscape": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "pink_flowers": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "relaxing_creek": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "river_raft": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "sea_sunset": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "stars_in_space": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "sunflower_field": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
+  },
+  "white_sand_beach": {
+    "key_id": "ed0102030405060708090a0b0c0d0e0f",
+    "key": "f0e0d0c0b0a090807060504030201000"
   }
 }

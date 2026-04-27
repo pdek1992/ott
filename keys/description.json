@@ -89,5 +89,115 @@
     "year": "2014",
     "duration": "10m",
     "thumbnail": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=640&q=80"
+  },
+  "countryside_meadow": {
+    "title": "Countryside Meadow",
+    "description": "Breathtaking aerial view of a lush green meadow bathed in sunlight.",
+    "category": "Nature",
+    "language": "en",
+    "genre": "Nature",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/countryside_meadow/thumbnail.png"
+  },
+  "forest_waterfall": {
+    "title": "Forest Waterfall",
+    "description": "A hidden waterfall cascading through a dense green forest.",
+    "category": "Nature",
+    "language": "en",
+    "genre": "Nature",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/forest_waterfall/thumbnail.png"
+  },
+  "mountain_highway": {
+    "title": "Mountain Highway",
+    "description": "Cruise down a winding mountain highway through dramatic peaks.",
+    "category": "Travel",
+    "language": "en",
+    "genre": "Travel",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/mountain_highway/thumbnail.png"
+  },
+  "pexels_cityscape": {
+    "title": "Cityscape Aerial",
+    "description": "Sweeping aerial footage over a modern cityscape at golden hour.",
+    "category": "Cinematic",
+    "language": "en",
+    "genre": "Cinematic",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/pexels_cityscape/thumbnail.png"
+  },
+  "pink_flowers": {
+    "title": "Pink Flowers",
+    "description": "Delicate pink blossoms captured in stunning close-up detail.",
+    "category": "Nature",
+    "language": "en",
+    "genre": "Nature",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/pink_flowers/thumbnail.png"
+  },
+  "relaxing_creek": {
+    "title": "Relaxing Creek",
+    "description": "Fly over a serene rocky creek winding through untouched nature.",
+    "category": "Nature",
+    "language": "en",
+    "genre": "Nature",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/relaxing_creek/thumbnail.png"
+  },
+  "river_raft": {
+    "title": "River Raft Journey",
+    "description": "A peaceful raft drifting gently down a calm sunlit river.",
+    "category": "Adventure",
+    "language": "en",
+    "genre": "Adventure",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/river_raft/thumbnail.png"
+  },
+  "sea_sunset": {
+    "title": "Sea Sunset",
+    "description": "A breathtaking sunset painting the ocean in golden hues.",
+    "category": "Nature",
+    "language": "en",
+    "genre": "Nature",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/sea_sunset/thumbnail.png"
+  },
+  "stars_in_space": {
+    "title": "Stars in Space",
+    "description": "A mesmerizing journey drifting through the stars and cosmos.",
+    "category": "Sci-Fi",
+    "language": "en",
+    "genre": "Sci-Fi",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/stars_in_space/thumbnail.png"
+  },
+  "sunflower_field": {
+    "title": "Sunflower Field",
+    "description": "A vast golden field of sunflowers swaying in the warm breeze.",
+    "category": "Nature",
+    "language": "en",
+    "genre": "Nature",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/sunflower_field/thumbnail.png"
+  },
+  "white_sand_beach": {
+    "title": "White Sand Beach",
+    "description": "Pristine white sand beach lapped by crystal-clear turquoise waves.",
+    "category": "Travel",
+    "language": "en",
+    "genre": "Travel",
+    "year": "2026",
+    "duration": "Preview",
+    "thumbnail": "https://ott.prashantkadam.in/white_sand_beach/thumbnail.png"
   }
 }
