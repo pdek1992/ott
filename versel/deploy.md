@@ -245,3 +245,21 @@ The login API uses `public.access_users` and `private.user_credentials`. To crea
 - `/api`: Contains Vercel serverless functions (Auth, Catalog, Playback License, Metrics, Cron).
 - `/supabase/migrations`: Contains the SQL schema file.
 - `vercel.json`: Configuration for routing and cron jobs.
+
+---
+
+### 📊 Observability & Metrics
+
+The platform uses a hybrid observability stack to maximize visibility on Vercel Hobby plans:
+
+1.  **Vercel Analytics & Speed Insights**: Integrated via standard Vercel script tags in `index.html`. View these in the Vercel Dashboard.
+2.  **Vercel Edge Metrics**: Captured via `middleware.js`. Every request reports its region (`x-vercel-id`), cache status (`x-vercel-cache`), and country to Prometheus.
+3.  **Web Vitals (Prometheus)**: Custom tracking in `observability.js` reports RUM performance (LCP, FID, CLS, TTFB) directly to your Grafana/Prometheus instance.
+4.  **CDN Health (Cloudflare)**: The `api/cron/cdn-metrics` task pulls aggregated data centers, status codes, and device metrics from Cloudflare.
+
+**Prometheus Measurements:**
+- `vercel_edge_metrics`: Request-level data from the edge.
+- `web_vitals`: UX performance scores (LCP, FID, CLS, TTFB, FCP).
+- `client_metrics`: Playback QoE (buffering, bitrate).
+- `cdn_summary`: Cloudflare aggregated performance.
+
