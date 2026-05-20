@@ -2331,9 +2331,3 @@ class ObservabilityManager {
 - Key rotation without content re-encoding
 - Brute-force protection with account lockout
 - Comprehensive error handling & fallbacks
-
----
-
-**End of Interview Guide**
-
-This document covers the complete end-to-end OTT platform architecture, from raw video input through final playback on web and mobile clients, with emphasis on live streaming, encryption, and observability.
